@@ -1,0 +1,824 @@
+<meta charset="utf-8">
+<title>Rummy Scorebook</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rummy">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#EEF0F3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12151A" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Layout: single 480px phone column, hairline-separated panels — same system as Lean Metrics */
+  :root{
+    --bg:#EEF0F3;
+    --surface:#FFFFFF;
+    --text:#12151A;
+    --text-2:#5B6470;
+    --hairline:rgba(18,21,26,0.12);
+    --tint:rgba(18,21,26,0.05);
+    --out:#C4432E;
+    --warn:#B9862A;
+    --win:#2E8C86;
+    --accent:#12151A;
+    --danger:#B23A2E;
+    --font-display:'Space Grotesk',-apple-system,BlinkMacSystemFont,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12151A; --surface:#1B2027; --text:#ECEEF1; --text-2:#8B94A0;
+      --hairline:rgba(236,238,241,0.14); --tint:rgba(236,238,241,0.06);
+      --out:#E2624A; --warn:#E0A94E; --win:#49A79E; --accent:#ECEEF1; --danger:#E2624A;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12151A; --surface:#1B2027; --text:#ECEEF1; --text-2:#8B94A0;
+    --hairline:rgba(236,238,241,0.14); --tint:rgba(236,238,241,0.06);
+    --out:#E2624A; --warn:#E0A94E; --win:#49A79E; --accent:#ECEEF1; --danger:#E2624A;
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:480px; margin:0 auto; padding:0 1.1rem 3rem;}
+  button{font:inherit; color:inherit; cursor:pointer;}
+  button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .mono{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+
+  header.top{padding:1.6rem 0 1.1rem;}
+  header.top h1{
+    font-family:var(--font-display); font-weight:700; font-size:1.7rem;
+    letter-spacing:-0.02em; margin:0 0 0.3rem; text-wrap:balance;
+  }
+  header.top p{margin:0; color:var(--text-2); font-size:0.92rem; line-height:1.4; max-width:36ch;}
+
+  .gamebar{display:flex; align-items:center; gap:0.8rem; padding:1.1rem 0 1rem;}
+  .gamebar .back{
+    border:1px solid var(--hairline); background:var(--surface); border-radius:10px;
+    padding:0.45rem 0.7rem; font-size:0.85rem; color:var(--text-2);
+  }
+  .gamebar .ttl{flex:1; min-width:0;}
+  .gamebar h1{font-family:var(--font-display); font-weight:700; font-size:1.35rem; margin:0; letter-spacing:-0.01em;}
+  .gamebar .sub{font-size:0.8rem; color:var(--text-2); margin-top:0.1rem;}
+
+  section.panel{padding:1.3rem 0; border-top:1px solid var(--hairline);}
+  h2.panel-title{
+    font-family:var(--font-display); font-weight:600; font-size:1rem; margin:0 0 0.9rem;
+    display:flex; justify-content:space-between; align-items:baseline; gap:0.6rem;
+  }
+  h2.panel-title small{font-family:var(--font-body); font-weight:400; font-size:0.78rem; color:var(--text-2);}
+
+  .field{margin-bottom:1.1rem;}
+  .field:last-child{margin-bottom:0;}
+  .field label, .lbl{display:block; font-size:0.82rem; color:var(--text-2); margin-bottom:0.4rem;}
+  input[type=number], input[type=text]{
+    width:100%; font-family:var(--font-mono); font-size:1.05rem;
+    padding:0.7rem 0.8rem; border-radius:10px; border:1px solid var(--hairline);
+    background:var(--surface); color:var(--text);
+  }
+  input[type=text]{font-family:var(--font-body);}
+  .row3{display:grid; grid-template-columns:repeat(3,1fr); gap:0.6rem;}
+
+  .segmented{
+    display:flex; background:var(--surface); border:1px solid var(--hairline);
+    border-radius:10px; padding:3px; gap:3px;
+  }
+  .segmented button{
+    flex:1; padding:0.6rem 0; border:none; background:transparent; color:var(--text-2);
+    font-family:var(--font-display); font-weight:500; font-size:0.88rem; border-radius:8px;
+  }
+  .segmented button.active{background:var(--accent); color:var(--bg);}
+  .hint{font-size:0.75rem; color:var(--text-2); margin-top:0.45rem; line-height:1.45;}
+
+  .player-edit{display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;}
+  .player-edit .seat{font-family:var(--font-mono); font-size:0.8rem; color:var(--text-2); width:1.2rem; text-align:center;}
+  .player-edit input{flex:1; min-width:0;}
+  .iconbtn{
+    width:2.6rem; height:2.6rem; flex-shrink:0; border-radius:10px;
+    border:1px solid var(--hairline); background:transparent; color:var(--text-2); font-size:1.1rem;
+  }
+  .linkbtn{background:none; border:none; padding:0.3rem 0; color:var(--text); font-weight:600; font-size:0.9rem;}
+  .linkbtn:disabled{color:var(--text-2); opacity:0.5;}
+
+  .btn{
+    display:block; width:100%; padding:0.9rem; border-radius:12px; border:none;
+    background:var(--accent); color:var(--bg);
+    font-family:var(--font-display); font-weight:600; font-size:1rem;
+  }
+  .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--hairline);}
+  .btn.danger{background:transparent; color:var(--danger); border:1px solid var(--hairline);}
+  .btn.confirming{background:var(--danger); color:#fff; border-color:var(--danger);}
+  .btnrow{display:flex; gap:0.6rem; margin-top:0.9rem;}
+  .btnrow .btn{flex:1;}
+
+  /* scoreboard */
+  .board{display:flex; flex-direction:column;}
+  .prow{padding:0.75rem 0; border-bottom:1px solid var(--hairline); display:grid; grid-template-columns:1fr auto; gap:0.2rem 0.8rem; align-items:center;}
+  .prow:last-child{border-bottom:none;}
+  .prow .who{display:flex; align-items:center; gap:0.45rem; min-width:0; flex-wrap:wrap;}
+  .prow .name{font-weight:600; font-size:0.98rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;}
+  .prow .tot{font-family:var(--font-mono); font-weight:600; font-size:1.5rem; text-align:right; line-height:1; font-variant-numeric:tabular-nums;}
+  .prow .meta{font-size:0.76rem; color:var(--text-2); display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;}
+  .prow .meta .mono{font-size:0.76rem;}
+  .prow .right2{font-size:0.76rem; text-align:right; font-family:var(--font-mono);}
+  .prow.out .name, .prow.out .tot{color:var(--text-2); text-decoration:line-through; text-decoration-thickness:1px;}
+  .bar{grid-column:1 / -1; height:4px; border-radius:2px; background:var(--tint); overflow:hidden; margin-top:0.3rem;}
+  .bar i{display:block; height:100%; background:var(--text-2); border-radius:2px;}
+  .bar i.warn{background:var(--warn);}
+  .bar i.hot{background:var(--out);}
+  .chip{
+    font-size:0.66rem; font-weight:600; letter-spacing:0.05em; text-transform:uppercase;
+    padding:0.15rem 0.45rem; border-radius:999px; border:1px solid currentColor; white-space:nowrap;
+  }
+  .chip.lead{color:var(--win);}
+  .chip.out{color:var(--out);}
+  .chip.re{color:var(--text-2);}
+  .pos{color:var(--win);} .neg{color:var(--out);}
+  .rejoin{
+    background:none; border:1px solid var(--hairline); border-radius:8px;
+    padding:0.25rem 0.55rem; font-size:0.74rem; color:var(--text);
+  }
+  .rejoin.confirming{background:var(--accent); color:var(--bg);}
+
+  .banner{
+    margin-top:0.9rem; padding:1rem; border-radius:12px; background:var(--tint); text-align:center;
+  }
+  .banner .big{font-family:var(--font-display); font-weight:700; font-size:1.3rem; margin:0.2rem 0;}
+  .banner .lbl{margin:0; text-transform:uppercase; letter-spacing:0.08em; font-size:0.7rem; color:var(--win); font-weight:600;}
+
+  /* deal entry */
+  .erow{display:flex; align-items:center; gap:0.35rem; padding:0.45rem 0;}
+  .erow .ename{flex:1; min-width:0; font-weight:600; font-size:0.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .quick{
+    width:2.3rem; height:2.5rem; flex-shrink:0; border-radius:8px; border:1px solid var(--hairline);
+    background:var(--surface); font-family:var(--font-mono); font-size:0.8rem; color:var(--text-2); padding:0;
+  }
+  .quick.r{font-family:var(--font-display); font-weight:700; color:var(--win);}
+  .quick.on{background:var(--accent); color:var(--bg); border-color:var(--accent);}
+  .erow input{width:3.9rem; flex-shrink:0; text-align:right; padding:0.55rem 0.6rem;}
+  .erow input.isR{color:var(--win); font-weight:600;}
+  .legend-q{font-size:0.74rem; color:var(--text-2); margin:0 0 0.4rem; line-height:1.45;}
+
+  .note{
+    font-size:0.84rem; line-height:1.5; padding:0.7rem 0.85rem; border-radius:10px;
+    background:var(--tint); color:var(--text-2); margin-top:0.8rem;
+  }
+  .note.warn{color:var(--danger); background:color-mix(in srgb, var(--danger) 9%, transparent);}
+
+  /* history */
+  .tablewrap{overflow-x:auto; margin:0 -0.2rem; -webkit-overflow-scrolling:touch;}
+  table.hist{border-collapse:collapse; width:100%; font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:0.85rem;}
+  table.hist th{
+    font-family:var(--font-body); font-weight:600; font-size:0.74rem; color:var(--text-2);
+    text-align:right; padding:0.4rem 0.45rem; border-bottom:1px solid var(--hairline); white-space:nowrap;
+    max-width:5.5rem; overflow:hidden; text-overflow:ellipsis;
+  }
+  table.hist td{text-align:right; padding:0.5rem 0.45rem; border-bottom:1px solid var(--hairline); white-space:nowrap;}
+  table.hist th:first-child, table.hist td:first-child{text-align:left; color:var(--text-2);}
+  table.hist tbody tr{cursor:pointer;}
+  table.hist tbody tr:hover td{background:var(--tint);}
+  table.hist tr.editing td{background:var(--tint); font-weight:600;}
+  table.hist td.r{color:var(--win); font-weight:600;}
+  table.hist td.x{color:var(--text-2); opacity:0.5;}
+  table.hist tr.rj td{font-family:var(--font-body); font-size:0.76rem; color:var(--text-2);}
+  table.hist tfoot td{font-weight:600; border-bottom:none; border-top:2px solid var(--text); color:var(--text);}
+  .empty{font-size:0.86rem; color:var(--text-2); padding:0.4rem 0;}
+
+  /* saved games */
+  .gitem{
+    display:flex; align-items:center; gap:0.7rem; width:100%; text-align:left;
+    padding:0.8rem 0.85rem; border:1px solid var(--hairline); border-radius:12px;
+    background:transparent; margin-bottom:0.5rem;
+  }
+  .gitem .gtxt{flex:1; min-width:0;}
+  .gitem strong{display:block; font-size:0.94rem; font-weight:600;}
+  .gitem span{display:block; font-size:0.78rem; color:var(--text-2); margin-top:0.1rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .gitem .state{font-size:0.66rem; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; white-space:nowrap;}
+  .gitem .state.live{color:var(--warn);}
+  .gitem .state.done{color:var(--text-2);}
+
+  details.methods summary{cursor:pointer; font-family:var(--font-display); font-weight:600; font-size:0.92rem; list-style:none;}
+  details.methods summary::-webkit-details-marker{display:none;}
+  details.methods summary::after{content:"+"; float:right; color:var(--text-2);}
+  details.methods[open] summary::after{content:"–";}
+  details.methods .body{padding-top:0.9rem; font-size:0.85rem; line-height:1.6; color:var(--text-2);}
+  details.methods .body p{margin:0 0 0.7rem;}
+
+  footer{padding-top:1.3rem; text-align:center;}
+  footer p{font-size:0.78rem; color:var(--text-2); line-height:1.6; margin:0 0 0.7rem;}
+
+  .toast{
+    position:fixed; left:50%; bottom:calc(1.2rem + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%);
+    background:var(--accent); color:var(--bg); padding:0.6rem 1rem; border-radius:999px;
+    font-size:0.85rem; font-weight:600; opacity:0; pointer-events:none; transition:opacity .2s;
+  }
+  .toast.show{opacity:1;}
+  textarea.copyfall{width:100%; height:8rem; margin-top:0.6rem; font-family:var(--font-mono); font-size:0.75rem; background:var(--surface); color:var(--text); border:1px solid var(--hairline); border-radius:10px; padding:0.6rem;}
+  @media (prefers-reduced-motion: reduce){ .toast{transition:none;} }
+</style>
+
+<div class="wrap">
+
+  <!-- ===================== SETUP ===================== -->
+  <div id="setupView">
+    <header class="top">
+      <h1>Rummy Scorebook</h1>
+      <p>Score every deal at the table instead of in a notebook. Totals, eliminations and drops are worked out for you.</p>
+    </header>
+
+    <section class="panel" id="resumePanel" hidden>
+      <h2 class="panel-title">Game in progress</h2>
+      <div id="resumeSlot"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Players <small id="playerCount"></small></h2>
+      <div id="playerEdit"></div>
+      <button class="linkbtn" id="addPlayer" type="button">+ Add player</button>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Game</h2>
+      <div class="field">
+        <div class="segmented" id="typeToggle">
+          <button type="button" data-val="pool101">Pool 101</button>
+          <button type="button" data-val="pool201">Pool 201</button>
+          <button type="button" data-val="points">Points</button>
+        </div>
+        <div class="hint" id="typeHint"></div>
+      </div>
+
+      <div class="field" id="limitField">
+        <label for="limitIn">Out at (points)</label>
+        <input type="number" id="limitIn" inputmode="numeric" min="20" step="1">
+      </div>
+
+      <div class="field">
+        <span class="lbl">Drop and penalty points</span>
+        <div class="row3">
+          <div><label for="dropFirst" class="lbl" style="font-size:0.72rem;">First drop</label><input type="number" id="dropFirst" inputmode="numeric" min="0"></div>
+          <div><label for="dropMid" class="lbl" style="font-size:0.72rem;">Middle drop</label><input type="number" id="dropMid" inputmode="numeric" min="0"></div>
+          <div><label for="dropFull" class="lbl" style="font-size:0.72rem;">Full count</label><input type="number" id="dropFull" inputmode="numeric" min="1"></div>
+        </div>
+        <div class="hint">Full count is also the most anyone can lose in one deal, and the penalty for a wrong show.</div>
+      </div>
+
+      <div class="field" id="rateField">
+        <label for="rateIn">Value per point (optional)</label>
+        <input type="number" id="rateIn" inputmode="decimal" min="0" step="0.05" placeholder="e.g. 1">
+        <div class="hint">If set, each deal's winner collects everyone's points × this value, and the scoreboard shows who owes what.</div>
+      </div>
+
+      <div id="setupErr" class="note warn" hidden></div>
+      <button class="btn" id="startBtn" type="button" style="margin-top:1rem;">Start game</button>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Saved games <small id="savedCount"></small></h2>
+      <div id="savedList"></div>
+    </section>
+
+    <section class="panel">
+      <details class="methods">
+        <summary>Scoring rules used</summary>
+        <div class="body">
+          <p><strong>Winner of a deal</strong> scores 0 — tap <strong>R</strong> (rummy) next to their name. Everyone else enters the value of their unmatched cards, capped at the full count.</p>
+          <p><strong>Pool 101 / 201</strong> — a player whose total reaches the limit (101 or 201) is out. The last player left wins the pool. Defaults: drops of 20 / 40 in Pool 101, 25 / 50 in Pool 201, full count 80.</p>
+          <p><strong>Rejoin</strong> — while at least two players are still in, an eliminated player can buy back in at one point more than the highest score still in the game.</p>
+          <p><strong>Points</strong> — no one is knocked out. Play as many deals as you like and tap Finish; the lowest total wins. With a point value set, the deal winner collects points × value from each other player.</p>
+          <p>Tap any deal in the score sheet to correct it. Totals and eliminations are recalculated straight away.</p>
+        </div>
+      </details>
+    </section>
+
+    <footer>
+      <p>Scores are saved on this phone, in this browser. Open the Share menu in Safari and choose "Add to Home Screen" to use this like an app, with its own icon.</p>
+    </footer>
+  </div>
+
+  <!-- ===================== GAME ===================== -->
+  <div id="gameView" hidden>
+    <div class="gamebar">
+      <button class="back" id="backBtn" type="button">‹ Games</button>
+      <div class="ttl">
+        <h1 id="gTitle">Pool 101</h1>
+        <div class="sub" id="gSub"></div>
+      </div>
+    </div>
+
+    <section class="panel">
+      <h2 class="panel-title">Scoreboard <small id="boardNote"></small></h2>
+      <div class="board" id="board"></div>
+      <div id="banner"></div>
+    </section>
+
+    <section class="panel" id="entryPanel">
+      <h2 class="panel-title"><span id="entryTitle">Deal 1</span> <small id="entrySub"></small></h2>
+      <p class="legend-q" id="quickLegend"></p>
+      <div id="entryRows"></div>
+      <div id="entryErr" class="note warn" hidden></div>
+      <div class="btnrow" id="entryBtns"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Score sheet <small>Tap a deal to correct it</small></h2>
+      <div id="history"></div>
+    </section>
+
+    <section class="panel">
+      <div class="btnrow" style="margin-top:0;">
+        <button class="btn ghost" id="copyBtn" type="button">Copy scores</button>
+        <button class="btn danger" id="finishBtn" type="button">Finish game</button>
+      </div>
+      <div id="copyFallback"></div>
+    </section>
+  </div>
+
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var KEY = 'rummyScorebook.v1';
+  var TYPES = {
+    pool101:{label:'Pool 101', limit:101, drops:[20,40,80], hint:'Players are out once they reach 101. Last one in wins.'},
+    pool201:{label:'Pool 201', limit:201, drops:[25,50,80], hint:'Players are out once they reach 201. Last one in wins.'},
+    points: {label:'Points',   limit:0,   drops:[20,40,80], hint:'No eliminations. Play any number of deals; lowest total wins.'}
+  };
+
+  var store = {
+    games:[],          // all games, newest first
+    currentId:null,
+    setup:{type:'pool101', names:['Player 1','Player 2','Player 3','Player 4'], limit:101, drops:[20,40,80], rate:''},
+    draft:{}           // in-progress deal entry: {gameId, editId, values:{pid:string}}
+  };
+
+  function load(){
+    try{
+      var raw = window.localStorage.getItem(KEY);
+      if(raw){
+        var p = JSON.parse(raw);
+        if(p && Array.isArray(p.games)) store.games = p.games;
+        if(p && p.currentId) store.currentId = p.currentId;
+        if(p && p.setup) for(var k in store.setup){ if(p.setup[k]!==undefined) store.setup[k]=p.setup[k]; }
+        if(p && p.draft) store.draft = p.draft;
+      }
+    }catch(e){ /* storage unavailable — start fresh */ }
+  }
+  function save(){
+    try{ window.localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){}
+  }
+
+  function el(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function curGame(){ for(var i=0;i<store.games.length;i++) if(store.games[i].id===store.currentId) return store.games[i]; return null; }
+  function fmtDate(t){ return new Date(t).toLocaleDateString(undefined,{day:'numeric', month:'short', year:'numeric'}); }
+  function money(v){
+    var r = Math.round(v*100)/100;
+    var s = Math.abs(r).toLocaleString(undefined,{maximumFractionDigits:2});
+    return (r>0?'+':r<0?'−':'') + s;
+  }
+
+  var toastT;
+  function toast(msg){
+    var t = el('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove('show'); }, 1800);
+  }
+
+  // Two-tap confirm: first tap arms the button, second tap within 3s runs the action.
+  function confirmTap(btn, armedLabel, action){
+    if(btn.dataset.armed === '1'){ btn.dataset.armed=''; action(); return; }
+    var orig = btn.textContent;
+    btn.dataset.armed = '1'; btn.classList.add('confirming'); btn.textContent = armedLabel;
+    setTimeout(function(){
+      if(btn.dataset.armed === '1'){ btn.dataset.armed=''; btn.classList.remove('confirming'); btn.textContent = orig; }
+    }, 3000);
+  }
+
+  /* ---------- scoring ---------- */
+  // Walk events in order: deals add points, rejoins set a player's total.
+  function summarize(g){
+    var totals = {}, rejoins = {}, net = {}, deals = 0, isPool = g.limit > 0;
+    g.players.forEach(function(p){ totals[p.id]=0; rejoins[p.id]=0; net[p.id]=0; });
+    g.events.forEach(function(ev){
+      if(ev.kind === 'deal'){
+        deals++;
+        var winner = null, zeros = 0;
+        for(var pid in ev.scores){ totals[pid] += ev.scores[pid]; if(ev.scores[pid]===0){ zeros++; winner = pid; } }
+        if(g.rate > 0 && zeros === 1){
+          for(var q in ev.scores){ if(q!==winner){ var amt = ev.scores[q]*g.rate; net[q]-=amt; net[winner]+=amt; } }
+        }
+      } else if(ev.kind === 'rejoin'){
+        totals[ev.pid] = ev.total; rejoins[ev.pid]++;
+      }
+    });
+    var active = g.players.filter(function(p){ return !isPool || totals[p.id] < g.limit; });
+    var pool = active.length ? active : g.players;
+    var low = Math.min.apply(null, pool.map(function(p){ return totals[p.id]; }));
+    var finished = !!g.closed || (isPool && deals > 0 && active.length <= 1);
+    var winnerId = null;
+    if(finished){
+      var cands = pool.filter(function(p){ return totals[p.id] === low; });
+      if(cands.length === 1) winnerId = cands[0].id;
+    }
+    return {totals:totals, rejoins:rejoins, net:net, deals:deals, active:active, low:low, finished:finished, winnerId:winnerId, isPool:isPool};
+  }
+  function isOut(g, s, pid){ return s.isPool && s.totals[pid] >= g.limit; }
+  function nameOf(g, pid){ for(var i=0;i<g.players.length;i++) if(g.players[i].id===pid) return g.players[i].name; return '?'; }
+
+  /* ---------- setup view ---------- */
+  function renderSetup(){
+    var su = store.setup;
+    var box = el('playerEdit'); box.innerHTML = '';
+    su.names.forEach(function(n, i){
+      var row = document.createElement('div'); row.className = 'player-edit';
+      row.innerHTML = '<span class="seat">'+(i+1)+'</span>' +
+        '<input type="text" id="pname'+i+'" autocomplete="off" autocapitalize="words" maxlength="20" aria-label="Player '+(i+1)+' name">' +
+        '<button type="button" class="iconbtn" aria-label="Remove player '+(i+1)+'">×</button>';
+      var inp = row.querySelector('input'); inp.value = n;
+      inp.addEventListener('input', function(){ su.names[i] = inp.value; save(); });
+      inp.addEventListener('focus', function(){ if(/^Player \d+$/.test(inp.value)) inp.select(); });
+      var rm = row.querySelector('button');
+      rm.disabled = su.names.length <= 2; rm.style.opacity = su.names.length <= 2 ? 0.35 : 1;
+      rm.addEventListener('click', function(){ su.names.splice(i,1); save(); renderSetup(); });
+      box.appendChild(row);
+    });
+    el('playerCount').textContent = su.names.length + ' of 8';
+    el('addPlayer').disabled = su.names.length >= 8;
+
+    Array.prototype.forEach.call(el('typeToggle').children, function(b){ b.classList.toggle('active', b.dataset.val === su.type); });
+    el('typeHint').textContent = TYPES[su.type].hint;
+    el('limitField').hidden = su.type === 'points';
+    el('rateField').hidden = su.type !== 'points';
+    el('limitIn').value = su.limit;
+    el('dropFirst').value = su.drops[0]; el('dropMid').value = su.drops[1]; el('dropFull').value = su.drops[2];
+    el('rateIn').value = su.rate;
+
+    // in-progress + saved games
+    var live = store.games.filter(function(g){ return !summarize(g).finished; });
+    el('resumePanel').hidden = live.length === 0;
+    el('resumeSlot').innerHTML = '';
+    live.forEach(function(g){ el('resumeSlot').appendChild(gameItem(g, true)); });
+
+    var done = store.games.filter(function(g){ return summarize(g).finished; });
+    el('savedCount').textContent = done.length ? done.length + (done.length===1?' game':' games') : '';
+    var list = el('savedList'); list.innerHTML = '';
+    if(!done.length){ list.innerHTML = '<div class="empty">Finished games will be listed here, with the winner and final scores.</div>'; }
+    done.forEach(function(g){ list.appendChild(gameItem(g, false)); });
+  }
+
+  function gameItem(g, live){
+    var s = summarize(g);
+    var b = document.createElement('button'); b.type='button'; b.className='gitem';
+    var names = g.players.map(function(p){ return p.name; }).join(', ');
+    var line = live ? ('Deal ' + (s.deals+1) + ' next · ' + names)
+                    : (s.winnerId ? nameOf(g, s.winnerId) + ' won' : 'Tied') + ' · ' + s.deals + ' deals · ' + names;
+    b.innerHTML = '<div class="gtxt"><strong>' + esc(g.label) + ' · ' + fmtDate(g.created) + '</strong><span>' + esc(line) + '</span></div>' +
+      '<span class="state ' + (live?'live':'done') + '">' + (live?'Resume':'View') + '</span>';
+    b.addEventListener('click', function(){ store.currentId = g.id; save(); show(); });
+    return b;
+  }
+
+  function readSetupInputs(){
+    var su = store.setup;
+    su.limit = parseInt(el('limitIn').value,10) || TYPES[su.type].limit;
+    su.drops = [parseInt(el('dropFirst').value,10), parseInt(el('dropMid').value,10), parseInt(el('dropFull').value,10)];
+    su.rate = el('rateIn').value;
+  }
+
+  function startGame(fromGame){
+    var su = store.setup, names, type, limit, drops, rate;
+    if(fromGame){
+      names = fromGame.players.map(function(p){ return p.name; });
+      type = fromGame.type; limit = fromGame.limit; drops = fromGame.drops.slice(); rate = fromGame.rate;
+    } else {
+      readSetupInputs();
+      names = su.names.map(function(n){ return n.trim(); });
+      type = su.type; limit = type === 'points' ? 0 : su.limit; drops = su.drops; rate = parseFloat(su.rate) || 0;
+      var err = null;
+      if(names.some(function(n){ return !n; })) err = 'Give every player a name, or remove the empty seat.';
+      else if(new Set(names.map(function(n){ return n.toLowerCase(); })).size !== names.length) err = 'Two players have the same name. Add an initial so you can tell them apart.';
+      else if(drops.some(function(d){ return isNaN(d) || d < 0; })) err = 'Enter drop and full-count points as whole numbers.';
+      else if(!(drops[2] > 0)) err = 'Full count must be more than 0.';
+      else if(type !== 'points' && !(limit > drops[2])) err = 'The pool limit should be higher than the full count (' + drops[2] + ').';
+      el('setupErr').hidden = !err; el('setupErr').textContent = err || '';
+      if(err) return;
+    }
+    var g = {
+      id:uid(), created:Date.now(), type:type, label:TYPES[type].label + (type!=='points' && limit!==TYPES[type].limit ? ' ('+limit+')' : ''),
+      limit:limit, drops:drops, rate:rate, closed:false,
+      players:names.map(function(n){ return {id:uid(), name:n}; }),
+      events:[]
+    };
+    store.games.unshift(g);
+    store.currentId = g.id;
+    store.draft = {};
+    save(); show(); window.scrollTo(0,0);
+  }
+
+  /* ---------- game view ---------- */
+  function renderGame(){
+    var g = curGame(); if(!g){ store.currentId=null; show(); return; }
+    var s = summarize(g);
+    el('gTitle').textContent = g.label;
+    el('gSub').textContent = fmtDate(g.created) + ' · ' + g.players.length + ' players · ' +
+      (s.isPool ? 'drops ' + g.drops[0] + ' / ' + g.drops[1] + ' / ' + g.drops[2] : 'full count ' + g.drops[2] + (g.rate ? ' · ' + g.rate + ' per point' : ''));
+    el('boardNote').textContent = s.isPool ? (s.active.length + ' still in') : (s.deals + (s.deals===1?' deal':' deals'));
+
+    // scoreboard
+    var board = el('board'); board.innerHTML = '';
+    var maxActive = Math.max.apply(null, s.active.map(function(p){ return s.totals[p.id]; }).concat([0]));
+    g.players.forEach(function(p){
+      var t = s.totals[p.id], out = isOut(g, s, p.id);
+      var lead = s.deals > 0 && !out && t === s.low && (s.isPool ? s.active.length > 1 || s.finished : true);
+      var row = document.createElement('div'); row.className = 'prow' + (out ? ' out' : '');
+      var chips = '';
+      if(s.finished && s.winnerId === p.id) chips += '<span class="chip lead">Winner</span>';
+      else if(lead) chips += '<span class="chip lead">Lowest</span>';
+      if(out) chips += '<span class="chip out">Out</span>';
+      if(s.rejoins[p.id]) chips += '<span class="chip re">Rejoined' + (s.rejoins[p.id]>1 ? ' ×'+s.rejoins[p.id] : '') + '</span>';
+
+      var meta = '', right2 = '';
+      if(s.isPool && !out){
+        var left = g.limit - t;
+        meta = '<span><span class="mono">' + left + '</span> to go</span>';
+        if(left <= g.drops[0]) meta += '<span class="neg">next drop knocks out</span>';
+        else if(left <= g.drops[2]) meta += '<span style="color:var(--warn)">a full count knocks out</span>';
+      }
+      if(s.isPool && out && !s.finished && s.active.length >= 2 && maxActive + 1 < g.limit){
+        meta = '<button type="button" class="rejoin">Rejoin at ' + (maxActive+1) + '</button>';
+      }
+      if(!s.isPool && g.rate){
+        var n = s.net[p.id];
+        right2 = '<span class="' + (n>0?'pos':n<0?'neg':'') + '">' + money(n) + '</span>';
+      }
+      var pct = s.isPool ? Math.min(100, t / g.limit * 100) : 0;
+      var barCls = s.isPool && !out ? (g.limit - t <= g.drops[0] ? 'hot' : g.limit - t <= g.drops[2] ? 'warn' : '') : '';
+      row.innerHTML =
+        '<div class="who"><span class="name">' + esc(p.name) + '</span>' + chips + '</div>' +
+        '<div class="tot">' + t + '</div>' +
+        '<div class="meta">' + meta + '</div>' +
+        '<div class="right2">' + right2 + '</div>' +
+        (s.isPool ? '<div class="bar"><i class="' + barCls + '" style="width:' + pct + '%"></i></div>' : '');
+      var rj = row.querySelector('.rejoin');
+      if(rj) rj.addEventListener('click', function(){
+        confirmTap(rj, 'Tap to confirm', function(){
+          g.events.push({id:uid(), kind:'rejoin', pid:p.id, total:maxActive+1});
+          save(); renderGame(); toast(p.name + ' rejoined at ' + (maxActive+1));
+        });
+      });
+      board.appendChild(row);
+    });
+
+    // finished banner
+    var ban = el('banner');
+    if(s.finished){
+      ban.innerHTML = '<div class="banner"><p class="lbl">Game over</p><div class="big">' +
+        (s.winnerId ? esc(nameOf(g, s.winnerId)) + ' wins' : 'Tied on ' + s.low) + '</div>' +
+        '<div class="hint">' + s.deals + ' deals played</div>' +
+        '<div class="btnrow"><button type="button" class="btn" id="rematchBtn">Rematch</button><button type="button" class="btn ghost" id="newBtn">New game</button></div></div>';
+      el('rematchBtn').addEventListener('click', function(){ startGame(g); toast('Rematch started'); });
+      el('newBtn').addEventListener('click', function(){ store.currentId = null; save(); show(); window.scrollTo(0,0); });
+    } else ban.innerHTML = '';
+
+    renderEntry(g, s);
+    renderHistory(g, s);
+
+    var fb = el('finishBtn');
+    fb.hidden = s.finished && !g.closed;
+    fb.textContent = g.closed ? 'Reopen game' : (s.isPool ? 'End game early' : 'Finish game');
+    fb.classList.remove('confirming'); fb.dataset.armed = '';
+  }
+
+  function draftFor(g){
+    if(store.draft.gameId !== g.id) store.draft = {gameId:g.id, editId:null, values:{}};
+    return store.draft;
+  }
+
+  function renderEntry(g, s){
+    var d = draftFor(g);
+    var editing = null, editNo = 0, dealNo = 0;
+    if(d.editId){
+      g.events.forEach(function(ev){ if(ev.kind==='deal'){ dealNo++; if(ev.id===d.editId){ editing = ev; editNo = dealNo; } } });
+      if(!editing){ d.editId = null; d.values = {}; }
+    }
+    var panel = el('entryPanel');
+    if(s.finished && !editing){ panel.hidden = true; return; }
+    panel.hidden = false;
+
+    var players;
+    if(editing) players = g.players.filter(function(p){ return editing.scores[p.id] !== undefined; });
+    else players = s.isPool ? s.active : g.players;
+
+    el('entryTitle').textContent = editing ? 'Correct deal ' + editNo : 'Deal ' + (s.deals + 1);
+    el('entrySub').textContent = editing ? '' : players.length + ' playing';
+    el('quickLegend').innerHTML = '<strong style="color:var(--win)">R</strong> = won the deal (0) · ' +
+      g.drops[0] + ' first drop · ' + g.drops[1] + ' middle drop · ' + g.drops[2] + ' full count';
+
+    var rows = el('entryRows'); rows.innerHTML = '';
+    players.forEach(function(p, idx){
+      var row = document.createElement('div'); row.className = 'erow';
+      var quickVals = [['R',0],[String(g.drops[0]),g.drops[0]],[String(g.drops[1]),g.drops[1]],[String(g.drops[2]),g.drops[2]]];
+      row.innerHTML = '<span class="ename">' + esc(p.name) + '</span>' +
+        quickVals.map(function(q,i){ return '<button type="button" class="quick' + (i===0?' r':'') + '" data-v="' + q[1] + '" aria-label="' + esc(p.name) + ' ' + (i===0?'won the deal':q[0]+' points') + '">' + q[0] + '</button>'; }).join('') +
+        '<input type="number" inputmode="numeric" min="0" max="' + g.drops[2] + '" id="score_' + p.id + '" aria-label="' + esc(p.name) + ' points" placeholder="–">';
+      var inp = row.querySelector('input');
+      var v = d.values[p.id];
+      if(v === undefined && editing) v = String(editing.scores[p.id]);
+      inp.value = v === undefined ? '' : v;
+      var quicks = row.querySelectorAll('.quick');
+      function sync(){
+        inp.classList.toggle('isR', inp.value === '0');
+        Array.prototype.forEach.call(quicks, function(b){ b.classList.toggle('on', inp.value !== '' && b.dataset.v === inp.value); });
+      }
+      inp.addEventListener('input', function(){ d.values[p.id] = inp.value; save(); sync(); el('entryErr').hidden = true; });
+      inp.addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){ var nx = rows.querySelectorAll('input')[idx+1]; if(nx) nx.focus(); else inp.blur(); }
+      });
+      Array.prototype.forEach.call(quicks, function(b){
+        b.addEventListener('click', function(){
+          if(b.dataset.v === '0'){ // only one winner per deal
+            players.forEach(function(o){ if(o.id!==p.id){ var oi = el('score_'+o.id); if(oi && oi.value==='0'){ oi.value=''; d.values[o.id]=''; oi.dispatchEvent(new Event('input')); } } });
+          }
+          inp.value = b.dataset.v; d.values[p.id] = inp.value; save(); sync(); el('entryErr').hidden = true;
+        });
+      });
+      sync();
+      rows.appendChild(row);
+    });
+
+    var btns = el('entryBtns'); btns.innerHTML = '';
+    var saveB = document.createElement('button'); saveB.type='button'; saveB.className='btn';
+    saveB.textContent = editing ? 'Save correction' : 'Save deal ' + (s.deals + 1);
+    saveB.addEventListener('click', function(){ commitDeal(g, players, editing); });
+    btns.appendChild(saveB);
+    if(editing){
+      var cancel = document.createElement('button'); cancel.type='button'; cancel.className='btn ghost'; cancel.textContent='Cancel';
+      cancel.addEventListener('click', function(){ d.editId=null; d.values={}; save(); renderGame(); });
+      var del = document.createElement('button'); del.type='button'; del.className='btn danger'; del.textContent='Delete';
+      del.addEventListener('click', function(){
+        confirmTap(del, 'Confirm', function(){
+          g.events = g.events.filter(function(ev){ return ev.id !== editing.id; });
+          d.editId=null; d.values={}; save(); renderGame(); toast('Deal ' + editNo + ' deleted');
+        });
+      });
+      btns.appendChild(cancel); btns.appendChild(del);
+    }
+  }
+
+  function commitDeal(g, players, editing){
+    var d = draftFor(g), scores = {}, err = null, zeros = 0;
+    for(var i=0;i<players.length;i++){
+      var p = players[i], raw = el('score_'+p.id).value.trim();
+      if(raw === ''){ err = 'Enter a score for ' + p.name + '. Use R if they won the deal.'; break; }
+      var n = Number(raw);
+      if(!Number.isInteger(n) || n < 0){ err = p.name + '\'s score must be a whole number of 0 or more.'; break; }
+      if(n > g.drops[2]){ err = p.name + ' has ' + n + ', but no one can lose more than ' + g.drops[2] + ' in a deal.'; break; }
+      if(n === 0) zeros++;
+      scores[p.id] = n;
+    }
+    if(!err && zeros === 0) err = 'Mark the deal winner with R (0 points).';
+    if(!err && zeros > 1) err = 'Only one player can win a deal. ' + zeros + ' players have 0.';
+    if(err){ var e = el('entryErr'); e.textContent = err; e.hidden = false; return; }
+
+    var before = summarize(g);
+    if(editing){ editing.scores = scores; toast('Deal corrected'); }
+    else g.events.push({id:uid(), kind:'deal', at:Date.now(), scores:scores});
+    d.editId = null; d.values = {};
+    save();
+    var after = summarize(g);
+    if(!editing){
+      var newlyOut = before.active.filter(function(p){ return isOut(g, after, p.id); }).map(function(p){ return p.name; });
+      toast(after.finished && after.winnerId ? nameOf(g, after.winnerId) + ' wins the game' :
+            newlyOut.length ? newlyOut.join(' & ') + ' out' : 'Deal ' + after.deals + ' saved');
+    }
+    renderGame();
+    if(!editing) el('board').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start'});
+  }
+
+  function renderHistory(g, s){
+    var box = el('history');
+    if(!g.events.length){ box.innerHTML = '<div class="empty">Each saved deal appears here as a row, like a page in the score book.</div>'; return; }
+    var d = draftFor(g);
+    var html = '<div class="tablewrap"><table class="hist"><thead><tr><th>Deal</th>' +
+      g.players.map(function(p){ return '<th title="' + esc(p.name) + '">' + esc(p.name) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    var n = 0;
+    g.events.forEach(function(ev){
+      if(ev.kind === 'deal'){
+        n++;
+        html += '<tr data-id="' + ev.id + '"' + (d.editId === ev.id ? ' class="editing"' : '') + '><td>' + n + '</td>' +
+          g.players.map(function(p){
+            var v = ev.scores[p.id];
+            return v === undefined ? '<td class="x">–</td>' : v === 0 ? '<td class="r">R</td>' : '<td>' + v + '</td>';
+          }).join('') + '</tr>';
+      } else {
+        html += '<tr class="rj"><td colspan="' + (g.players.length+1) + '">' + esc(nameOf(g, ev.pid)) + ' rejoined at ' + ev.total + '</td></tr>';
+      }
+    });
+    html += '</tbody><tfoot><tr><td>Total</td>' + g.players.map(function(p){ return '<td>' + s.totals[p.id] + '</td>'; }).join('') + '</tr></tfoot></table></div>';
+    box.innerHTML = html;
+    Array.prototype.forEach.call(box.querySelectorAll('tbody tr[data-id]'), function(tr){
+      tr.addEventListener('click', function(){
+        d.editId = tr.dataset.id; d.values = {}; save(); renderGame();
+        el('entryPanel').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start'});
+      });
+    });
+  }
+
+  function scoreText(g){
+    var s = summarize(g), lines = [];
+    lines.push('Rummy · ' + g.label + ' · ' + fmtDate(g.created));
+    var n = 0;
+    g.events.forEach(function(ev){
+      if(ev.kind === 'deal'){
+        n++;
+        lines.push('Deal ' + n + ': ' + g.players.filter(function(p){ return ev.scores[p.id] !== undefined; })
+          .map(function(p){ return p.name + ' ' + (ev.scores[p.id] === 0 ? 'R' : ev.scores[p.id]); }).join(', '));
+      } else lines.push(nameOf(g, ev.pid) + ' rejoined at ' + ev.total);
+    });
+    lines.push('');
+    lines.push('Totals: ' + g.players.map(function(p){
+      return p.name + ' ' + s.totals[p.id] + (isOut(g, s, p.id) ? ' (out)' : '') + (g.rate ? ' [' + money(s.net[p.id]) + ']' : '');
+    }).join(', '));
+    if(s.finished) lines.push(s.winnerId ? 'Winner: ' + nameOf(g, s.winnerId) : 'Result: tie');
+    return lines.join('\n');
+  }
+
+  /* ---------- screen wake lock while a game is open ---------- */
+  var wakeLock = null;
+  function keepAwake(on){
+    try{
+      if(on && !wakeLock && navigator.wakeLock){
+        navigator.wakeLock.request('screen').then(function(l){ wakeLock = l; l.addEventListener('release', function(){ wakeLock = null; }); }).catch(function(){});
+      } else if(!on && wakeLock){ wakeLock.release().catch(function(){}); wakeLock = null; }
+    }catch(e){}
+  }
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible' && curGame()) keepAwake(true); });
+
+  /* ---------- view switching ---------- */
+  function show(){
+    var g = curGame();
+    el('setupView').hidden = !!g;
+    el('gameView').hidden = !g;
+    el('copyFallback').innerHTML = '';
+    if(g){ renderGame(); keepAwake(true); }
+    else { renderSetup(); keepAwake(false); }
+  }
+
+  /* ---------- wire up static controls ---------- */
+  el('addPlayer').addEventListener('click', function(){
+    if(store.setup.names.length >= 8) return;
+    store.setup.names.push('Player ' + (store.setup.names.length + 1)); save(); renderSetup();
+    var ins = el('playerEdit').querySelectorAll('input'); ins[ins.length-1].focus();
+  });
+  Array.prototype.forEach.call(el('typeToggle').children, function(b){
+    b.addEventListener('click', function(){
+      var su = store.setup; readSetupInputs();
+      su.type = b.dataset.val; su.limit = TYPES[su.type].limit || su.limit; su.drops = TYPES[su.type].drops.slice();
+      save(); renderSetup();
+    });
+  });
+  ['limitIn','dropFirst','dropMid','dropFull','rateIn'].forEach(function(id){
+    el(id).addEventListener('input', function(){ readSetupInputs(); save(); });
+  });
+  el('startBtn').addEventListener('click', function(){ startGame(null); });
+  el('backBtn').addEventListener('click', function(){ store.currentId = null; save(); show(); window.scrollTo(0,0); });
+
+  el('finishBtn').addEventListener('click', function(){
+    var g = curGame(), fb = el('finishBtn');
+    if(g.closed){ g.closed = false; save(); renderGame(); toast('Game reopened'); return; }
+    confirmTap(fb, 'Tap again to finish', function(){
+      g.closed = true; g.finishedAt = Date.now(); save(); renderGame(); window.scrollTo(0,0); toast('Game finished');
+    });
+  });
+
+  el('copyBtn').addEventListener('click', function(){
+    var txt = scoreText(curGame());
+    function fallback(){
+      var box = el('copyFallback');
+      box.innerHTML = '<p class="hint">Copying isn\'t available here. Select the text below and copy it.</p><textarea class="copyfall" id="copyArea" readonly></textarea>';
+      var ta = el('copyArea'); ta.value = txt; ta.focus(); ta.select();
+    }
+    try{
+      navigator.clipboard.writeText(txt).then(function(){ toast('Scores copied'); }, fallback);
+    }catch(e){ fallback(); }
+  });
+
+  /* ---------- boot ---------- */
+  load();
+  show();
+})();
+</script>
