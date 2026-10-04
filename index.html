@@ -165,6 +165,16 @@
   }
   .quick.r{font-family:var(--font-display); font-weight:700; color:var(--win);}
   .quick.on{background:var(--accent); color:var(--bg); border-color:var(--accent);}
+  .dealer{display:flex; flex-wrap:wrap; align-items:center; gap:0.4rem; padding-bottom:0.7rem; margin-bottom:0.3rem; border-bottom:1px dashed var(--hairline);}
+  .dealer .lbl{margin:0 0.2rem 0 0; font-size:0.8rem;}
+  .dealer button{
+    border:1px solid var(--hairline); background:var(--surface); color:var(--text-2);
+    border-radius:999px; padding:0.35rem 0.75rem; font-size:0.84rem; max-width:9rem;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .dealer button.on{background:var(--accent); color:var(--bg); border-color:var(--accent); font-weight:600;}
+  .chip.deal{color:var(--text);}
+  table.hist td.dl{font-family:var(--font-body); font-size:0.78rem; color:var(--text-2); text-align:left; max-width:5.5rem; overflow:hidden; text-overflow:ellipsis;}
   .erow input{width:3.9rem; flex-shrink:0; text-align:right; padding:0.55rem 0.6rem;}
   .erow input.isR{color:var(--win); font-weight:600;}
   .legend-q{font-size:0.74rem; color:var(--text-2); margin:0 0 0.4rem; line-height:1.45;}
@@ -296,6 +306,7 @@
           <p><strong>Pool 101 / 201</strong> — a player whose total reaches the limit (101 or 201) is out. The last player left wins the pool. Defaults: drops of 20 / 40 in Pool 101, 25 / 50 in Pool 201, full count 80.</p>
           <p><strong>Rejoin</strong> — while at least two players are still in, an eliminated player can buy back in at one point more than the highest score still in the game.</p>
           <p><strong>Points</strong> — no one is knocked out. Play as many deals as you like and tap Finish; the lowest total wins. With a point value set, the deal winner collects points × value from each other player.</p>
+          <p><strong>Dealer</strong> — the app suggests the next dealer by passing the deal round the table in seat order, skipping anyone who is out. Tap a different name if someone else dealt.</p>
           <p>Tap any deal in the score sheet to correct it. Totals and eliminations are recalculated straight away.</p>
         </div>
       </details>
@@ -325,6 +336,7 @@
     <section class="panel" id="entryPanel">
       <h2 class="panel-title"><span id="entryTitle">Deal 1</span> <small id="entrySub"></small></h2>
       <p class="legend-q" id="quickLegend"></p>
+      <div class="dealer" id="dealerPick"></div>
       <div id="entryRows"></div>
       <div id="entryErr" class="note warn" hidden></div>
       <div class="btnrow" id="entryBtns"></div>
@@ -529,6 +541,19 @@
     save(); show(); window.scrollTo(0,0);
   }
 
+  // Deal passes to the next player in seat order who is still in the game.
+  function nextDealer(g, s){
+    var last = null;
+    g.events.forEach(function(ev){ if(ev.kind==='deal' && ev.dealer) last = ev.dealer; });
+    var n = g.players.length, start = 0;
+    if(last){ for(var i=0;i<n;i++) if(g.players[i].id===last){ start = i+1; break; } }
+    for(var k=0;k<n;k++){
+      var p = g.players[(start+k)%n];
+      if(!isOut(g, s, p.id)) return p.id;
+    }
+    return null;
+  }
+
   /* ---------- game view ---------- */
   function renderGame(){
     var g = curGame(); if(!g){ store.currentId=null; show(); return; }
@@ -541,6 +566,7 @@
     // scoreboard
     var board = el('board'); board.innerHTML = '';
     var maxActive = Math.max.apply(null, s.active.map(function(p){ return s.totals[p.id]; }).concat([0]));
+    var dealing = s.finished ? null : (draftFor(g).dealer && !draftFor(g).editId ? draftFor(g).dealer : nextDealer(g, s));
     g.players.forEach(function(p){
       var t = s.totals[p.id], out = isOut(g, s, p.id);
       var lead = s.deals > 0 && !out && t === s.low && (s.isPool ? s.active.length > 1 || s.finished : true);
@@ -549,6 +575,7 @@
       if(s.finished && s.winnerId === p.id) chips += '<span class="chip lead">Winner</span>';
       else if(lead) chips += '<span class="chip lead">Lowest</span>';
       if(out) chips += '<span class="chip out">Out</span>';
+      if(dealing === p.id) chips += '<span class="chip deal">Dealing</span>';
       if(s.rejoins[p.id]) chips += '<span class="chip re">Rejoined' + (s.rejoins[p.id]>1 ? ' ×'+s.rejoins[p.id] : '') + '</span>';
 
       var meta = '', right2 = '';
@@ -604,7 +631,7 @@
   }
 
   function draftFor(g){
-    if(store.draft.gameId !== g.id) store.draft = {gameId:g.id, editId:null, values:{}};
+    if(store.draft.gameId !== g.id) store.draft = {gameId:g.id, editId:null, values:{}, dealer:null};
     return store.draft;
   }
 
@@ -613,7 +640,7 @@
     var editing = null, editNo = 0, dealNo = 0;
     if(d.editId){
       g.events.forEach(function(ev){ if(ev.kind==='deal'){ dealNo++; if(ev.id===d.editId){ editing = ev; editNo = dealNo; } } });
-      if(!editing){ d.editId = null; d.values = {}; }
+      if(!editing){ d.editId = null; d.values = {}; d.dealer = null; }
     }
     var panel = el('entryPanel');
     if(s.finished && !editing){ panel.hidden = true; return; }
@@ -627,6 +654,22 @@
     el('entrySub').textContent = editing ? '' : players.length + ' playing';
     el('quickLegend').innerHTML = '<strong style="color:var(--win)">R</strong> = won the deal (0) · ' +
       g.drops[0] + ' first drop · ' + g.drops[1] + ' middle drop · ' + g.drops[2] + ' full count';
+
+    // dealer picker
+    var dealerId = d.dealer;
+    if(!dealerId || !players.some(function(p){ return p.id === dealerId; })){
+      dealerId = editing ? (editing.dealer || null) : nextDealer(g, s);
+      if(dealerId && !players.some(function(p){ return p.id === dealerId; })) dealerId = null;
+    }
+    var dp = el('dealerPick');
+    dp.innerHTML = '<span class="lbl">Cards dealt by</span>';
+    players.forEach(function(p){
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = p.name;
+      b.className = p.id === dealerId ? 'on' : '';
+      b.setAttribute('aria-pressed', p.id === dealerId ? 'true' : 'false');
+      b.addEventListener('click', function(){ d.dealer = p.id; save(); renderGame(); });
+      dp.appendChild(b);
+    });
 
     var rows = el('entryRows'); rows.innerHTML = '';
     players.forEach(function(p, idx){
@@ -663,23 +706,23 @@
     var btns = el('entryBtns'); btns.innerHTML = '';
     var saveB = document.createElement('button'); saveB.type='button'; saveB.className='btn';
     saveB.textContent = editing ? 'Save correction' : 'Save deal ' + (s.deals + 1);
-    saveB.addEventListener('click', function(){ commitDeal(g, players, editing); });
+    saveB.addEventListener('click', function(){ commitDeal(g, players, editing, dealerId); });
     btns.appendChild(saveB);
     if(editing){
       var cancel = document.createElement('button'); cancel.type='button'; cancel.className='btn ghost'; cancel.textContent='Cancel';
-      cancel.addEventListener('click', function(){ d.editId=null; d.values={}; save(); renderGame(); });
+      cancel.addEventListener('click', function(){ d.editId=null; d.values={}; d.dealer=null; save(); renderGame(); });
       var del = document.createElement('button'); del.type='button'; del.className='btn danger'; del.textContent='Delete';
       del.addEventListener('click', function(){
         confirmTap(del, 'Confirm', function(){
           g.events = g.events.filter(function(ev){ return ev.id !== editing.id; });
-          d.editId=null; d.values={}; save(); renderGame(); toast('Deal ' + editNo + ' deleted');
+          d.editId=null; d.values={}; d.dealer=null; save(); renderGame(); toast('Deal ' + editNo + ' deleted');
         });
       });
       btns.appendChild(cancel); btns.appendChild(del);
     }
   }
 
-  function commitDeal(g, players, editing){
+  function commitDeal(g, players, editing, dealerId){
     var d = draftFor(g), scores = {}, err = null, zeros = 0;
     for(var i=0;i<players.length;i++){
       var p = players[i], raw = el('score_'+p.id).value.trim();
@@ -690,14 +733,15 @@
       if(n === 0) zeros++;
       scores[p.id] = n;
     }
+    if(!err && !dealerId) err = 'Tap the name of the player who dealt the cards.';
     if(!err && zeros === 0) err = 'Mark the deal winner with R (0 points).';
     if(!err && zeros > 1) err = 'Only one player can win a deal. ' + zeros + ' players have 0.';
     if(err){ var e = el('entryErr'); e.textContent = err; e.hidden = false; return; }
 
     var before = summarize(g);
-    if(editing){ editing.scores = scores; toast('Deal corrected'); }
-    else g.events.push({id:uid(), kind:'deal', at:Date.now(), scores:scores});
-    d.editId = null; d.values = {};
+    if(editing){ editing.scores = scores; editing.dealer = dealerId; toast('Deal corrected'); }
+    else g.events.push({id:uid(), kind:'deal', at:Date.now(), dealer:dealerId, scores:scores});
+    d.editId = null; d.values = {}; d.dealer = null;
     save();
     var after = summarize(g);
     if(!editing){
@@ -713,26 +757,26 @@
     var box = el('history');
     if(!g.events.length){ box.innerHTML = '<div class="empty">Each saved deal appears here as a row, like a page in the score book.</div>'; return; }
     var d = draftFor(g);
-    var html = '<div class="tablewrap"><table class="hist"><thead><tr><th>Deal</th>' +
+    var html = '<div class="tablewrap"><table class="hist"><thead><tr><th>Deal</th><th style="text-align:left">Dealer</th>' +
       g.players.map(function(p){ return '<th title="' + esc(p.name) + '">' + esc(p.name) + '</th>'; }).join('') + '</tr></thead><tbody>';
     var n = 0;
     g.events.forEach(function(ev){
       if(ev.kind === 'deal'){
         n++;
-        html += '<tr data-id="' + ev.id + '"' + (d.editId === ev.id ? ' class="editing"' : '') + '><td>' + n + '</td>' +
+        html += '<tr data-id="' + ev.id + '"' + (d.editId === ev.id ? ' class="editing"' : '') + '><td>' + n + '</td><td class="dl">' + (ev.dealer ? esc(nameOf(g, ev.dealer)) : '–') + '</td>' +
           g.players.map(function(p){
             var v = ev.scores[p.id];
             return v === undefined ? '<td class="x">–</td>' : v === 0 ? '<td class="r">R</td>' : '<td>' + v + '</td>';
           }).join('') + '</tr>';
       } else {
-        html += '<tr class="rj"><td colspan="' + (g.players.length+1) + '">' + esc(nameOf(g, ev.pid)) + ' rejoined at ' + ev.total + '</td></tr>';
+        html += '<tr class="rj"><td colspan="' + (g.players.length+2) + '">' + esc(nameOf(g, ev.pid)) + ' rejoined at ' + ev.total + '</td></tr>';
       }
     });
-    html += '</tbody><tfoot><tr><td>Total</td>' + g.players.map(function(p){ return '<td>' + s.totals[p.id] + '</td>'; }).join('') + '</tr></tfoot></table></div>';
+    html += '</tbody><tfoot><tr><td>Total</td><td></td>' + g.players.map(function(p){ return '<td>' + s.totals[p.id] + '</td>'; }).join('') + '</tr></tfoot></table></div>';
     box.innerHTML = html;
     Array.prototype.forEach.call(box.querySelectorAll('tbody tr[data-id]'), function(tr){
       tr.addEventListener('click', function(){
-        d.editId = tr.dataset.id; d.values = {}; save(); renderGame();
+        d.editId = tr.dataset.id; d.values = {}; d.dealer = null; save(); renderGame();
         el('entryPanel').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start'});
       });
     });
@@ -745,7 +789,7 @@
     g.events.forEach(function(ev){
       if(ev.kind === 'deal'){
         n++;
-        lines.push('Deal ' + n + ': ' + g.players.filter(function(p){ return ev.scores[p.id] !== undefined; })
+        lines.push('Deal ' + n + (ev.dealer ? ' (dealt by ' + nameOf(g, ev.dealer) + ')' : '') + ': ' + g.players.filter(function(p){ return ev.scores[p.id] !== undefined; })
           .map(function(p){ return p.name + ' ' + (ev.scores[p.id] === 0 ? 'R' : ev.scores[p.id]); }).join(', '));
       } else lines.push(nameOf(g, ev.pid) + ' rejoined at ' + ev.total);
     });
