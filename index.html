@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <meta charset="utf-8">
 <title>Rummy Scorebook</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -58,7 +59,23 @@
     font-family:var(--font-body);
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:480px; margin:0 auto; padding:0 1.1rem 3rem;}
+  html{-webkit-text-size-adjust:100%; text-size-adjust:100%;}
+  body{overflow-x:hidden;}
+  .wrap{
+    max-width:520px; margin:0 auto;
+    padding:0 max(1rem, env(safe-area-inset-right, 0px)) 3rem max(1rem, env(safe-area-inset-left, 0px));
+  }
+  .cols{display:block;}
+  .col{min-width:0;}
+  @media (min-width:720px){ .wrap{max-width:640px; padding-left:1.5rem; padding-right:1.5rem;} }
+  /* tablet landscape & desktop: two columns so the whole game fits on screen */
+  @media (min-width:980px){
+    .wrap{max-width:1140px; padding-left:2rem; padding-right:2rem;}
+    .cols{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); column-gap:3rem; align-items:start;}
+    #setupView .cols{grid-template-columns:minmax(0,1.1fr) minmax(0,0.9fr);}
+    #setupView .col.side{padding-top:1.6rem;}
+    footer{text-align:left;}
+  }
   button{font:inherit; color:inherit; cursor:pointer;}
   button:focus-visible, input:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
   .mono{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
@@ -127,7 +144,8 @@
   .btn.danger{background:transparent; color:var(--danger); border:1px solid var(--hairline);}
   .btn.confirming{background:var(--danger); color:#fff; border-color:var(--danger);}
   .btnrow{display:flex; gap:0.6rem; margin-top:0.9rem;}
-  .btnrow .btn{flex:1;}
+  .btnrow .btn{flex:1; min-width:0; padding-left:0.5rem; padding-right:0.5rem;}
+  @media (max-width:360px){ .btnrow .btn{font-size:0.92rem;} }
 
   /* scoreboard */
   .board{display:flex; flex-direction:column;}
@@ -144,6 +162,8 @@
   .bar i{display:block; height:100%; background:var(--text-2); border-radius:2px;}
   .bar i.warn{background:var(--warn);}
   .bar i.hot{background:var(--out);}
+  .bar i.won{background:var(--win);}
+  .prow.out .bar i{opacity:.3;}
   .chip{
     font-size:0.66rem; font-weight:600; letter-spacing:0.05em; text-transform:uppercase;
     padding:0.15rem 0.45rem; border-radius:999px; border:1px solid currentColor; white-space:nowrap;
@@ -185,6 +205,18 @@
   table.hist td.dl{font-family:var(--font-body); font-size:0.78rem; color:var(--text-2); text-align:left; max-width:5.5rem; overflow:hidden; text-overflow:ellipsis;}
   .erow input{width:3.9rem; flex-shrink:0; text-align:right; padding:0.55rem 0.6rem;}
   .erow input.isR{color:var(--win); font-weight:600;}
+  .erow .pdot{margin-right:0.1rem;}
+  /* narrow screens: name on its own line, buttons share the full width (big tap targets) */
+  #entryRows{container-type:inline-size;}
+  @container (max-width: 430px){
+    .erow{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)) minmax(0,1.35fr); gap:0.4rem; padding:0.6rem 0; border-bottom:1px solid var(--hairline);}
+    .erow:last-child{border-bottom:none;}
+    .erow .who-e{grid-column:1 / -1; display:flex; align-items:center; gap:0.45rem; min-width:0;}
+    .erow .quick{width:auto; height:2.85rem; font-size:0.9rem;}
+    .erow input{width:100%; height:2.85rem; padding:0.4rem 0.6rem; font-size:1rem;}
+  }
+  .erow .who-e{display:flex; align-items:center; gap:0.45rem; flex:1; min-width:0;}
+  .erow .who-e .ename{flex:1;}
   .legend-q{font-size:0.74rem; color:var(--text-2); margin:0 0 0.4rem; line-height:1.45;}
 
   .note{
@@ -210,6 +242,15 @@
   table.hist td.x{color:var(--text-2); opacity:0.5;}
   table.hist tr.rj td{font-family:var(--font-body); font-size:0.76rem; color:var(--text-2);}
   table.hist tfoot td{font-weight:600; border-bottom:none; border-top:2px solid var(--text); color:var(--text);}
+  /* keep the deal number pinned while the player columns scroll sideways */
+  table.hist th:first-child, table.hist td:first-child{
+    position:sticky; left:0; z-index:1; background:var(--bg);
+    box-shadow:6px 0 6px -6px rgba(0,0,0,.25); padding-left:0.3rem;
+  }
+  table.hist tbody tr:hover td:first-child, table.hist tr.editing td:first-child{background:linear-gradient(var(--tint),var(--tint)), var(--bg);}
+  table.hist tr.rj td:first-child{position:static; box-shadow:none; background:transparent;}
+  table.hist th.dlh{text-align:left;}
+  .scrollhint{font-size:0.72rem; color:var(--text-2); margin-top:0.45rem;}
   .empty{font-size:0.86rem; color:var(--text-2); padding:0.4rem 0;}
 
   /* saved games */
@@ -263,6 +304,8 @@
   .card .br{bottom:5px; right:5px; transform:rotate(180deg);}
   .card .mid{position:absolute; inset:0; display:grid; place-items:center; font-size:30px; line-height:1;}
   .card .jkl{position:absolute; left:0; right:0; bottom:16px; text-align:center; font-size:7.5px; font-weight:700; letter-spacing:.22em;}
+  header.top .hand{margin-left:1.6rem;}
+  @media (max-width:340px){ header.top .hand{transform:scale(.88); transform-origin:0 100%; margin-left:1.4rem;} }
   .meld{font-size:0.74rem; color:var(--text-2); margin-bottom:0.9rem; min-height:1em;}
   .meld b{color:var(--text); font-weight:600;}
   .banner .hand{margin:-0.4rem auto 0.2rem; transform:scale(.78); transform-origin:50% 100%; height:124px; cursor:default;}
@@ -322,13 +365,13 @@
   .race{position:relative; touch-action:pan-y;}
   .race svg{display:block; width:100%; height:auto; overflow:visible; font-family:var(--font-mono); -webkit-user-select:none; user-select:none;}
   .race .grid{stroke:var(--hairline); stroke-width:1;}
-  .race .ax{fill:var(--text-2); font-size:9px;}
+  .race .ax{fill:var(--text-2); font-size:10.5px;}
   .race .limit{stroke:var(--out); stroke-width:1.25; stroke-dasharray:4 4;}
-  .race .limtxt{fill:var(--out); font-size:9px; font-family:var(--font-body); font-weight:600;}
+  .race .limtxt{fill:var(--out); font-size:10.5px; font-family:var(--font-body); font-weight:600;}
   .race .ln{fill:none; stroke:var(--pc); stroke-width:2; stroke-linejoin:round; stroke-linecap:round;}
   .race .ln.dim{opacity:.4;}
   .race .end, .race .labdot, .race .dots circle{fill:var(--pc); stroke:var(--bg); stroke-width:2;}
-  .race .lab{fill:var(--text); font-size:10px; font-family:var(--font-body); font-weight:600;}
+  .race .lab{fill:var(--text); font-size:11px; font-family:var(--font-body); font-weight:600;}
   .race .xh{stroke:var(--text-2); stroke-width:1; stroke-dasharray:2 3; opacity:0;}
   .race.drawing .end, .race.drawing .lab, .race.drawing .labdot{animation:fadeIn .45s ease-out 1.05s both;}
   @keyframes fadeIn{0%{opacity:0} 100%{opacity:1}}
@@ -346,6 +389,34 @@
   .legend{display:flex; flex-wrap:wrap; gap:0.35rem 0.9rem; font-size:0.78rem; color:var(--text-2); margin-top:0.6rem;}
   .legend span{display:inline-flex; align-items:center; gap:0.35rem;}
 
+  /* live scoreboard */
+  .livepill{
+    display:inline-flex; align-items:center; gap:0.4rem; flex-shrink:0;
+    border:1px solid var(--hairline); background:var(--surface); color:var(--text-2);
+    border-radius:999px; padding:0.4rem 0.7rem; font-size:0.78rem; font-weight:600; white-space:nowrap;
+  }
+  .livepill .ld{width:8px; height:8px; border-radius:50%; background:var(--text-2); opacity:.5;}
+  .livepill.na{opacity:.6;}
+  .livepill.on{color:var(--out); border-color:color-mix(in srgb, var(--out) 45%, transparent);}
+  .livepill.on .ld, .livetag .ld{background:var(--out); opacity:1; animation:livepulse 1.6s ease-out infinite;}
+  @keyframes livepulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--out) 55%, transparent)} 100%{box-shadow:0 0 0 7px transparent}}
+  .livetag{display:inline-flex; align-items:center; gap:0.35rem; font-size:0.68rem; font-weight:700; letter-spacing:0.08em; color:var(--out); text-transform:uppercase;}
+  .livetag .ld{width:7px; height:7px; border-radius:50%;}
+  .livebar{display:flex; align-items:center; justify-content:space-between; gap:0.6rem; flex-wrap:wrap;
+    padding:0.6rem 0.8rem; margin:-0.2rem 0 1rem; border-radius:10px; background:var(--tint); font-size:0.8rem; color:var(--text-2);}
+  .livebar .btn{width:auto; display:inline-block; padding:0.45rem 0.8rem; font-size:0.82rem;}
+  .livecard{border:1px solid var(--hairline); border-radius:12px; padding:0.8rem 0.9rem; background:var(--surface);}
+  .livecard .lhead{display:flex; justify-content:space-between; align-items:center; gap:0.6rem; margin-bottom:0.5rem;}
+  .livecard .lttl{font-weight:600; font-size:0.94rem;}
+  .livecard .lrow{display:flex; align-items:center; gap:0.5rem; padding:0.28rem 0; font-size:0.9rem;}
+  .livecard .lrow .nm{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .livecard .lrow .sc{font-family:var(--font-mono); font-weight:600; font-variant-numeric:tabular-nums;}
+  .livecard .lrow.out .nm, .livecard .lrow.out .sc{color:var(--text-2); text-decoration:line-through;}
+  .livecard .lfoot{font-size:0.74rem; color:var(--text-2); margin-top:0.5rem;}
+  .livecard .btnrow{margin-top:0.7rem;}
+  .ro-hide{}
+  body.ro .ro-hide{display:none !important;}
+
   #fx{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:60; transition:opacity .45s;}
   #fx.catch{pointer-events:auto; cursor:pointer;}
   #fx.fade{opacity:0;}
@@ -359,12 +430,19 @@
 
   <!-- ===================== SETUP ===================== -->
   <div id="setupView">
+   <div class="cols">
+    <div class="col main">
     <header class="top">
       <div class="hand" id="hand" role="button" tabindex="0" aria-label="Shuffle the cards"></div>
       <div class="meld" id="meldName" aria-live="polite"></div>
       <h1>Rummy Scorebook</h1>
       <p>Score every deal at the table instead of in a notebook. Totals, eliminations and drops are worked out for you.</p>
     </header>
+
+    <section class="panel" id="livePanel" hidden>
+      <h2 class="panel-title"><span class="livetag"><span class="ld"></span><span id="liveTitle">Live now</span></span> <small id="liveAge"></small></h2>
+      <div id="liveSlot"></div>
+    </section>
 
     <section class="panel" id="resumePanel" hidden>
       <h2 class="panel-title">Game in progress</h2>
@@ -413,6 +491,8 @@
       <div id="setupErr" class="note warn" hidden></div>
       <button class="btn" id="startBtn" type="button" style="margin-top:1rem;">Start game</button>
     </section>
+    </div>
+    <div class="col side">
 
     <section class="panel">
       <h2 class="panel-title">Saved games <small id="savedCount"></small></h2>
@@ -424,18 +504,21 @@
         <summary>Scoring rules used</summary>
         <div class="body">
           <p><strong>Winner of a deal</strong> scores 0 — tap <strong>R</strong> (rummy) next to their name. Everyone else enters the value of their unmatched cards, capped at the full count.</p>
-          <p><strong>Pool 101 / 201</strong> — a player whose total reaches the limit (101 or 201) is out. The last player left wins the pool. Defaults: drops of 20 / 40 in Pool 101, 25 / 50 in Pool 201, full count 80.</p>
+          <p><strong>Pool 101 / 201</strong> — a player whose total reaches the limit (101 or 201) is out. The last player left wins the pool. Defaults: first drop 20, middle drop 40, full count 80.</p>
           <p><strong>Rejoin</strong> — while at least two players are still in, an eliminated player can buy back in at one point more than the highest score still in the game.</p>
           <p><strong>Points</strong> — no one is knocked out. Play as many deals as you like and tap Finish; the lowest total wins. With a point value set, the deal winner collects points × value from each other player.</p>
           <p><strong>Dealer</strong> — the app suggests the next dealer by passing the deal round the table in seat order, skipping anyone who is out. Tap a different name if someone else dealt.</p>
           <p>Tap any deal in the score sheet to correct it. Totals and eliminations are recalculated straight away.</p>
+          <p><strong>Live scoreboard</strong> — the scorekeeper taps <strong>Go live</strong> in a game. Anyone who opens this scorebook sees the running games under "Live now" and can watch the scores update after every deal, without being able to change them. On the website, scores pass through the free ntfy.sh relay.</p>
         </div>
       </details>
     </section>
 
     <footer>
-      <p>Scores are saved on this phone, in this browser. Open the Share menu in Safari and choose "Add to Home Screen" to use this like an app, with its own icon.</p>
+      <p>Scores are saved on this device, in this browser. To use it like an app with its own icon: on iPhone, open the Share menu in Safari and choose "Add to Home Screen"; on Android, open the Chrome menu (⋮) and choose "Add to Home screen".</p>
     </footer>
+    </div>
+   </div>
   </div>
 
   <!-- ===================== GAME ===================== -->
@@ -446,13 +529,19 @@
         <h1 id="gTitle">Pool 101</h1>
         <div class="sub" id="gSub"></div>
       </div>
+      <button class="livepill" id="liveBtn" type="button" hidden><span class="ld"></span><span id="liveBtnTxt">Go live</span></button>
     </div>
+    <div class="livebar" id="liveBar" hidden></div>
 
+   <div class="cols">
+    <div class="col">
     <section class="panel">
       <h2 class="panel-title">Scoreboard <small id="boardNote"></small></h2>
       <div class="board" id="board"></div>
       <div id="banner"></div>
     </section>
+    </div>
+    <div class="col">
 
     <section class="panel" id="entryPanel">
       <h2 class="panel-title"><span id="entryTitle">Deal 1</span> <small id="entrySub"></small></h2>
@@ -470,17 +559,19 @@
     </section>
 
     <section class="panel">
-      <h2 class="panel-title">Score sheet <small>Tap a deal to correct it</small></h2>
+      <h2 class="panel-title">Score sheet <small class="ro-hide">Tap a deal to correct it</small></h2>
       <div id="history"></div>
     </section>
 
     <section class="panel">
       <div class="btnrow" style="margin-top:0;">
         <button class="btn ghost" id="copyBtn" type="button">Copy scores</button>
-        <button class="btn danger" id="finishBtn" type="button">Finish game</button>
+        <button class="btn danger ro-hide" id="finishBtn" type="button">Finish game</button>
       </div>
       <div id="copyFallback"></div>
     </section>
+    </div>
+   </div>
   </div>
 
 </div>
@@ -494,15 +585,16 @@
   var KEY = 'rummyScorebook.v1';
   var TYPES = {
     pool101:{label:'Pool 101', limit:101, drops:[20,40,80], hint:'Players are out once they reach 101. Last one in wins.'},
-    pool201:{label:'Pool 201', limit:201, drops:[25,50,80], hint:'Players are out once they reach 201. Last one in wins.'},
+    pool201:{label:'Pool 201', limit:201, drops:[20,40,80], hint:'Players are out once they reach 201. Last one in wins.'},
     points: {label:'Points',   limit:0,   drops:[20,40,80], hint:'No eliminations. Play any number of deals; lowest total wins.'}
   };
 
   var store = {
     games:[],          // all games, newest first
     currentId:null,
-    setup:{type:'pool101', names:['Player 1','Player 2','Player 3','Player 4'], limit:101, drops:[20,40,80], rate:''},
-    draft:{}           // in-progress deal entry: {gameId, editId, values:{pid:string}}
+    setup:{type:'pool101', names:['Player 1','Player 2','Player 3','Player 4'], limit:101, drops:[20,40,80], rate:'', autoLive:true},
+    draft:{},          // in-progress deal entry: {gameId, editId, values:{pid:string}}
+    liveId:null        // the game this device is sharing on the live scoreboard
   };
 
   function load(){
@@ -511,14 +603,21 @@
       if(raw){
         var p = JSON.parse(raw);
         if(p && Array.isArray(p.games)) store.games = p.games;
+        // older games were titled e.g. "Pool 101 (201)" — name pools by their real limit
+        store.games.forEach(function(g){ if(g && g.limit > 0) g.label = 'Pool ' + g.limit; });
         if(p && p.currentId) store.currentId = p.currentId;
         if(p && p.setup) for(var k in store.setup){ if(p.setup[k]!==undefined) store.setup[k]=p.setup[k]; }
         if(p && p.draft) store.draft = p.draft;
+        if(p && p.liveId) store.liveId = p.liveId;
+        // older saves defaulted Pool 201 to 25 / 50 — the table plays 20 / 40 / 80
+        var sd = store.setup.drops;
+        if(sd && sd[0] === 25 && sd[1] === 50) store.setup.drops = [20, 40, sd[2] || 80];
       }
     }catch(e){ /* storage unavailable — start fresh */ }
   }
   function save(){
     try{ window.localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){}
+    livePushMaybe();
   }
 
   function el(id){ return document.getElementById(id); }
@@ -610,6 +709,7 @@
     el('dropFirst').value = su.drops[0]; el('dropMid').value = su.drops[1]; el('dropFull').value = su.drops[2];
     el('rateIn').value = su.rate;
 
+    renderLivePanel();
     // in-progress + saved games
     var live = store.games.filter(function(g){ return !summarize(g).finished; });
     el('resumePanel').hidden = live.length === 0;
@@ -661,7 +761,7 @@
       if(err) return;
     }
     var g = {
-      id:uid(), created:Date.now(), type:type, label:TYPES[type].label + (type!=='points' && limit!==TYPES[type].limit ? ' ('+limit+')' : ''),
+      id:uid(), created:Date.now(), type:type, label:type === 'points' ? 'Points' : 'Pool ' + limit,
       limit:limit, drops:drops, rate:rate, closed:false,
       players:names.map(function(n){ return {id:uid(), name:n}; }),
       events:[]
@@ -669,6 +769,7 @@
     store.games.unshift(g);
     store.currentId = g.id;
     store.draft = {};
+    if(store.liveId || store.setup.autoLive !== false) store.liveId = g.id;   // new games go on the live board unless turned off
     save(); show(); window.scrollTo(0,0);
   }
 
@@ -687,7 +788,10 @@
 
   /* ---------- game view ---------- */
   function renderGame(){
-    var g = curGame(); if(!g){ store.currentId=null; show(); return; }
+    var g = viewGame();
+    if(!g){ if(watching) watching = null; else store.currentId = null; show(); return; }
+    var RO = !!watching;
+    document.body.classList.toggle('ro', RO);
     var s = summarize(g);
     el('gTitle').textContent = g.label;
     el('gSub').textContent = fmtDate(g.created) + ' · ' + g.players.length + ' players · ' +
@@ -697,11 +801,11 @@
     // scoreboard
     var board = el('board'); board.innerHTML = '';
     var maxActive = Math.max.apply(null, s.active.map(function(p){ return s.totals[p.id]; }).concat([0]));
-    var dealing = s.finished ? null : (draftFor(g).dealer && !draftFor(g).editId ? draftFor(g).dealer : nextDealer(g, s));
+    var dealing = s.finished ? null : (!RO && draftFor(g).dealer && !draftFor(g).editId ? draftFor(g).dealer : nextDealer(g, s));
     var dealerChanged = lastDealer[g.id] !== undefined && lastDealer[g.id] !== dealing;
     lastDealer[g.id] = dealing;
     g.players.forEach(function(p, idx){
-      var t = s.totals[p.id], out = isOut(g, s, p.id);
+      var t = s.totals[p.id], out = isOut(g, s, p.id) && !(s.finished && s.winnerId === p.id);
       var lead = s.deals > 0 && !out && t === s.low && (s.isPool ? s.active.length > 1 || s.finished : true);
       var row = document.createElement('div'); row.className = 'prow' + (out ? ' out' : ''); row.dataset.pid = p.id;
       var chips = '';
@@ -718,7 +822,7 @@
         if(left <= g.drops[0]) meta += '<span class="neg">next drop knocks out</span>';
         else if(left <= g.drops[2]) meta += '<span style="color:var(--warn)">a full count knocks out</span>';
       }
-      if(s.isPool && out && !s.finished && s.active.length >= 2 && maxActive + 1 < g.limit){
+      if(!RO && s.isPool && out && !s.finished && s.active.length >= 2 && maxActive + 1 < g.limit){
         meta = '<button type="button" class="rejoin">Rejoin at ' + (maxActive+1) + '</button>';
       }
       if(!s.isPool && g.rate){
@@ -726,7 +830,7 @@
         right2 = '<span class="' + (n>0?'pos':n<0?'neg':'') + '">' + money(n) + '</span>';
       }
       var pct = s.isPool ? Math.min(100, t / g.limit * 100) : 0;
-      var barCls = s.isPool && !out ? (g.limit - t <= g.drops[0] ? 'hot' : g.limit - t <= g.drops[2] ? 'warn' : '') : '';
+      var barCls = s.finished && s.winnerId === p.id ? 'won' : s.isPool && !out ? (g.limit - t <= g.drops[0] ? 'hot' : g.limit - t <= g.drops[2] ? 'warn' : '') : '';
       row.innerHTML =
         '<div class="who"><span class="pdot" style="--pc:var(--p' + (idx+1) + ')"></span><span class="name">' + esc(p.name) + '</span>' + chips + '</div>' +
         '<div class="tot"><span class="n">' + t + '</span></div>' +
@@ -750,13 +854,14 @@
       ban.innerHTML = '<div class="banner"><div class="hand" id="winHand" aria-hidden="true"></div><p class="lbl">Game over</p><div class="big">' +
         (s.winnerId ? esc(nameOf(g, s.winnerId)) + ' wins' : 'Tied on ' + s.low) + '</div>' +
         '<div class="hint">' + s.deals + ' deals played</div>' +
-        '<div class="btnrow"><button type="button" class="btn" id="rematchBtn">Rematch</button><button type="button" class="btn ghost" id="newBtn">New game</button></div></div>';
+        '<div class="btnrow ro-hide"><button type="button" class="btn" id="rematchBtn">Rematch</button><button type="button" class="btn ghost" id="newBtn">New game</button></div></div>';
       buildHand(el('winHand'), [{rank:'A',suit:0},{rank:'A',suit:1},{joker:true},{rank:'A',suit:2},{rank:'A',suit:3}]);
       fanIn(el('winHand'));
       el('rematchBtn').addEventListener('click', function(){ startGame(g); toast('Rematch started'); });
       el('newBtn').addEventListener('click', function(){ store.currentId = null; save(); show(); window.scrollTo(0,0); });
     } else ban.innerHTML = '';
 
+    renderLiveUI(g);
     renderEntry(g, s);
     renderChart(g, s);
     renderHistory(g, s);
@@ -775,6 +880,7 @@
   }
 
   function renderEntry(g, s){
+    if(watching){ el('entryPanel').hidden = true; return; }
     var d = draftFor(g);
     var editing = null, editNo = 0, dealNo = 0;
     if(d.editId){
@@ -814,7 +920,8 @@
     players.forEach(function(p, idx){
       var row = document.createElement('div'); row.className = 'erow';
       var quickVals = [['R',0],[String(g.drops[0]),g.drops[0]],[String(g.drops[1]),g.drops[1]],[String(g.drops[2]),g.drops[2]]];
-      row.innerHTML = '<span class="ename">' + esc(p.name) + '</span>' +
+      var seat = g.players.indexOf(p) + 1;
+      row.innerHTML = '<span class="who-e"><span class="pdot" style="--pc:var(--p' + seat + ')"></span><span class="ename">' + esc(p.name) + '</span></span>' +
         quickVals.map(function(q,i){ return '<button type="button" class="quick' + (i===0?' r':'') + '" data-v="' + q[1] + '" aria-label="' + esc(p.name) + ' ' + (i===0?'won the deal':q[0]+' points') + '">' + q[0] + '</button>'; }).join('') +
         '<input type="number" inputmode="numeric" min="0" max="' + g.drops[2] + '" id="score_' + p.id + '" aria-label="' + esc(p.name) + ' points" placeholder="–">';
       var inp = row.querySelector('input');
@@ -903,25 +1010,31 @@
   function renderHistory(g, s){
     var box = el('history');
     if(!g.events.length){ box.innerHTML = '<div class="empty">Each saved deal appears here as a row, like a page in the score book.</div>'; return; }
-    var d = draftFor(g);
-    var html = '<div class="tablewrap"><table class="hist"><thead><tr><th>Deal</th><th style="text-align:left">Dealer</th>' +
-      g.players.map(function(p){ return '<th title="' + esc(p.name) + '">' + esc(p.name) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    var d = watching ? {editId:null} : draftFor(g);
+    // Player columns come first so the scores are visible on a phone; dealer is the last column.
+    var html = '<div class="tablewrap"><table class="hist"><thead><tr><th>#</th>' +
+      g.players.map(function(p){ return '<th title="' + esc(p.name) + '">' + esc(p.name) + '</th>'; }).join('') + '<th class="dlh">Dealer</th></tr></thead><tbody>';
     var n = 0;
     g.events.forEach(function(ev){
       if(ev.kind === 'deal'){
         n++;
-        html += '<tr data-id="' + ev.id + '"' + (d.editId === ev.id ? ' class="editing"' : '') + '><td>' + n + '</td><td class="dl">' + (ev.dealer ? esc(nameOf(g, ev.dealer)) : '–') + '</td>' +
+        html += '<tr data-id="' + ev.id + '"' + (d.editId === ev.id ? ' class="editing"' : '') + '><td>' + n + '</td>' +
           g.players.map(function(p){
             var v = ev.scores[p.id];
             return v === undefined ? '<td class="x">–</td>' : v === 0 ? '<td class="r">R</td>' : '<td>' + v + '</td>';
-          }).join('') + '</tr>';
+          }).join('') + '<td class="dl">' + (ev.dealer ? esc(nameOf(g, ev.dealer)) : '–') + '</td></tr>';
       } else {
         html += '<tr class="rj"><td colspan="' + (g.players.length+2) + '">' + esc(nameOf(g, ev.pid)) + ' rejoined at ' + ev.total + '</td></tr>';
       }
     });
-    html += '</tbody><tfoot><tr><td>Total</td><td></td>' + g.players.map(function(p){ return '<td>' + s.totals[p.id] + '</td>'; }).join('') + '</tr></tfoot></table></div>';
+    html += '</tbody><tfoot><tr><td>Total</td>' + g.players.map(function(p){ return '<td>' + s.totals[p.id] + '</td>'; }).join('') + '<td></td></tr></tfoot></table></div>';
     box.innerHTML = html;
-    Array.prototype.forEach.call(box.querySelectorAll('tbody tr[data-id]'), function(tr){
+    var tw = box.querySelector('.tablewrap');
+    if(tw.scrollWidth > tw.clientWidth + 2){
+      var hint = document.createElement('div'); hint.className = 'scrollhint'; hint.textContent = 'Swipe the sheet sideways to see every player →';
+      box.appendChild(hint);
+    }
+    if(!watching) Array.prototype.forEach.call(box.querySelectorAll('tbody tr[data-id]'), function(tr){
       tr.addEventListener('click', function(){
         d.editId = tr.dataset.id; d.values = {}; d.dealer = null; save(); renderGame();
         el('entryPanel').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start'});
@@ -957,11 +1070,12 @@
       } else if(!on && wakeLock){ wakeLock.release().catch(function(){}); wakeLock = null; }
     }catch(e){}
   }
-  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible' && curGame()) keepAwake(true); });
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible' && viewGame()) keepAwake(true); });
 
   /* ---------- view switching ---------- */
   function show(){
-    var g = curGame();
+    var g = viewGame();
+    if(!g) document.body.classList.remove('ro');
     el('setupView').hidden = !!g;
     el('gameView').hidden = !g;
     el('copyFallback').innerHTML = '';
@@ -987,7 +1101,10 @@
     el(id).addEventListener('input', function(){ readSetupInputs(); save(); });
   });
   el('startBtn').addEventListener('click', function(){ startGame(null); });
-  el('backBtn').addEventListener('click', function(){ store.currentId = null; save(); show(); window.scrollTo(0,0); });
+  el('backBtn').addEventListener('click', function(){
+    if(watching) watching = null; else store.currentId = null;
+    save(); show(); window.scrollTo(0,0);
+  });
 
   el('finishBtn').addEventListener('click', function(){
     var g = curGame(), fb = el('finishBtn');
@@ -998,7 +1115,7 @@
   });
 
   el('copyBtn').addEventListener('click', function(){
-    var txt = scoreText(curGame());
+    var txt = scoreText(viewGame());
     function fallback(){
       var box = el('copyFallback');
       box.innerHTML = '<p class="hint">Copying isn\'t available here. Select the text below and copy it.</p><textarea class="copyfall" id="copyArea" readonly></textarea>';
@@ -1240,16 +1357,21 @@
       } else if(ser[ev.pid]){ tot[ev.pid] = ev.total; ser[ev.pid].push({x:n, y:ev.total, jump:true}); }
     });
 
-    var W = 340, H = 200, direct = g.players.length <= 4;
-    var m = {l:30, r:direct ? 66 : 12, t:14, b:24};
+    // Size the chart to the real width so text stays readable on small phones and doesn't balloon on desktop.
+    var W = Math.round(Math.max(260, Math.min(720, box.clientWidth || 340)));
+    var H = Math.round(Math.max(190, Math.min(300, W * 0.6)));
+    var direct = g.players.length <= 4 || (W >= 420 && g.players.length <= 6);
+    var m = {l:34, r:direct ? 78 : 14, t:16, b:26};
+    chartW[g.id] = W;
     var maxY = 0;
     for(var k in ser) ser[k].forEach(function(pt){ if(pt.y > maxY) maxY = pt.y; });
-    var yMax = s.isPool ? Math.max(g.limit, maxY) : niceCeil(Math.max(maxY, 10));
+    var yMax = s.isPool ? (maxY > g.limit * 1.08 ? niceCeil(maxY) : g.limit * 1.08) : niceCeil(Math.max(maxY, 10));
     function X(v){ return m.l + v / n * (W - m.l - m.r); }
     function Y(v){ return H - m.b - v / yMax * (H - m.t - m.b); }
 
-    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Running total for each player after every deal">';
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="Running total for each player after every deal">';
     var ticks = s.isPool ? [0, Math.round(g.limit / 2)] : [0, yMax / 2, yMax];
+    if(s.isPool && maxY > g.limit * 1.08) ticks.push(yMax);
     ticks.forEach(function(tv){
       svg += '<line class="grid" x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + Y(tv) + '" y2="' + Y(tv) + '"/>' +
              '<text class="ax" x="' + (m.l - 6) + '" y="' + (Y(tv) + 3) + '" text-anchor="end">' + tv + '</text>';
@@ -1257,7 +1379,7 @@
     if(s.isPool){
       svg += '<line class="limit" x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + Y(g.limit) + '" y2="' + Y(g.limit) + '"/>' +
              '<text class="ax" x="' + (m.l - 6) + '" y="' + (Y(g.limit) + 3) + '" text-anchor="end">' + g.limit + '</text>' +
-             '<text class="limtxt" x="' + (W - m.r) + '" y="' + (Y(g.limit) - 5) + '" text-anchor="end">Out at ' + g.limit + '</text>';
+             '<text class="limtxt" x="' + (m.l + 4) + '" y="' + (Y(g.limit) - 5) + '" text-anchor="start">Out at ' + g.limit + '</text>';
     }
     var step = Math.max(1, Math.ceil(n / 8));
     for(var xi = step; xi <= n; xi += step) svg += '<text class="ax" x="' + X(xi) + '" y="' + (H - m.b + 14) + '" text-anchor="middle">' + xi + '</text>';
@@ -1267,16 +1389,16 @@
     g.players.forEach(function(p, i){
       var pts = ser[p.id], d = '';
       pts.forEach(function(pt, j){ d += (j === 0 || pt.jump ? 'M' : 'L') + X(pt.x).toFixed(1) + ' ' + Y(pt.y).toFixed(1) + ' '; });
-      var out = isOut(g, s, p.id), last = pts[pts.length - 1];
+      var out = isOut(g, s, p.id) && !(s.finished && s.winnerId === p.id), last = pts[pts.length - 1];
       svg += '<path class="ln' + (out ? ' dim' : '') + '" style="--pc:var(--p' + (i + 1) + ')" d="' + d + '"/>';
       ends.push({name:p.name, i:i, x:X(last.x), y:Y(last.y), ly:Y(last.y)});
     });
     ends.forEach(function(e){ svg += '<circle class="end" style="--pc:var(--p' + (e.i + 1) + ')" cx="' + e.x + '" cy="' + e.y + '" r="4"/>'; });
     if(direct){
       var byY = ends.slice().sort(function(a, b){ return a.ly - b.ly; });
-      for(var q = 1; q < byY.length; q++) if(byY[q].ly - byY[q - 1].ly < 13) byY[q].ly = byY[q - 1].ly + 13;
+      for(var q = 1; q < byY.length; q++) if(byY[q].ly - byY[q - 1].ly < 14) byY[q].ly = byY[q - 1].ly + 14;
       byY.forEach(function(e){
-        var lx = W - m.r + 10, nm = e.name.length > 9 ? e.name.slice(0, 8) + '…' : e.name;
+        var lx = W - m.r + 10, nm = e.name.length > 10 ? e.name.slice(0, 9) + '…' : e.name;
         svg += '<circle class="labdot" style="--pc:var(--p' + (e.i + 1) + ')" cx="' + lx + '" cy="' + e.ly + '" r="3"/>' +
                '<text class="lab" x="' + (lx + 7) + '" y="' + (e.ly + 3.5) + '">' + esc(nm) + '</text>';
       });
@@ -1333,9 +1455,298 @@
   }
   document.addEventListener('pointerdown', function(e){ if(!el('chart').contains(e.target)) hideTip(); });
 
+  // Redraw the chart when the screen size or orientation changes.
+  var chartW = {}, resizeT;
+  window.addEventListener('resize', function(){
+    clearTimeout(resizeT);
+    resizeT = setTimeout(function(){
+      var g = viewGame(), box = el('chart');
+      if(!g || el('chartPanel').hidden) return;
+      var w = Math.round(Math.max(260, Math.min(720, box.clientWidth || 340)));
+      if(w !== chartW[g.id]){ renderChart(g, summarize(g)); renderHistory(g, summarize(g)); }
+    }, 150);
+  });
+
+  /* ---------- live scoreboard ---------- */
+  // Each scorekeeper's device publishes its game; every open copy of the page lists the running games.
+  // Two transports, same UI:
+  //  • on claude.ai the page's shared database (doc live/board)
+  //  • on any other website (e.g. GitHub Pages) the free ntfy.sh relay on this site's channel
+  var NTFY = 'https://ntfy.sh/', TOPIC = 'rummy-scorebook-anilmadha-q8v3k7';
+  var LIVE = {mode:null, db:null, canWrite:null, games:{}, lastSent:null, sending:false, again:false, t:0, es:null, failToast:0};
+  var watching = null;   // id of the remote game being watched, or null
+
+  function remoteEntry(id){ return id ? LIVE.games[id] || null : null; }
+  function viewGame(){ if(watching){ var e = remoteEntry(watching); return e ? e.game : null; } return curGame(); }
+  function liveGame(){
+    if(!store.liveId) return null;
+    for(var i=0;i<store.games.length;i++) if(store.games[i].id===store.liveId) return store.games[i];
+    return null;
+  }
+  function ago(t){
+    var sec = Math.max(0, Math.round((Date.now() - t) / 1000));
+    return sec < 10 ? 'just now' : sec < 60 ? sec + 's ago' : sec < 3600 ? Math.round(sec / 60) + ' min ago' :
+           sec < 86400 ? Math.round(sec / 3600) + ' h ago' : fmtDate(t);
+  }
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+  /* --- encoding for the relay: deflate + base64 keeps a long game under the relay's message size --- */
+  function b64(bytes){ var s = ''; for(var i=0;i<bytes.length;i+=0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i+0x8000)); return btoa(s); }
+  function unb64(str){ var s = atob(str), a = new Uint8Array(s.length); for(var i=0;i<s.length;i++) a[i] = s.charCodeAt(i); return a; }
+  function encodeMsg(obj){
+    var json = JSON.stringify(obj);
+    if(typeof CompressionStream === 'undefined') return Promise.resolve('RS0 ' + json);
+    var cs = new Blob([json]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    return new Response(cs).arrayBuffer().then(function(buf){ return 'RS1 ' + b64(new Uint8Array(buf)); });
+  }
+  function decodeMsg(text){
+    if(typeof text !== 'string') return Promise.resolve(null);
+    if(text.indexOf('RS0 ') === 0) return Promise.resolve(JSON.parse(text.slice(4)));
+    if(text.indexOf('RS1 ') === 0){
+      if(typeof DecompressionStream === 'undefined') return Promise.resolve(null);
+      var ds = new Blob([unb64(text.slice(4))]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      return new Response(ds).text().then(function(t){ return JSON.parse(t); });
+    }
+    return Promise.resolve(null);
+  }
+
+  /* --- publishing (scorekeeper) --- */
+  function livePushMaybe(){
+    if(!LIVE.mode || LIVE.canWrite === false) return;
+    clearTimeout(LIVE.t); LIVE.t = setTimeout(livePush, LIVE.mode === 'web' ? 900 : 350);
+  }
+  function livePush(stoppedId){
+    if(!LIVE.mode || LIVE.canWrite === false) return;
+    var g = liveGame();
+    var key = g ? JSON.stringify(g) : 'null:' + (stoppedId || '');
+    if(key === LIVE.lastSent) return;          // nothing changed since the last send
+    if(LIVE.sending){ LIVE.again = true; return; }
+    LIVE.sending = true;
+    var now = Date.now(), job;
+    if(LIVE.mode === 'db'){
+      job = LIVE.db.doc('live/board').set({game: g ? JSON.parse(key) : null, updatedAt: now});
+    } else {
+      if(!g && !stoppedId){ LIVE.sending = false; return; }
+      job = encodeMsg(g ? {v:1, g:JSON.parse(key), t:now} : {v:1, stop:stoppedId, t:now}).then(function(body){
+        return fetch(NTFY + TOPIC, {method:'POST', body:body}).then(function(r){
+          if(!r.ok) throw {code: r.status === 429 ? 'rate' : 'http'};
+        });
+      });
+    }
+    job.then(function(){
+      LIVE.lastSent = key;
+      if(g) LIVE.games[g.id] = {game:JSON.parse(key), updatedAt:now, mine:true};
+      else if(stoppedId) delete LIVE.games[stoppedId];
+    }, function(e){
+      var code = e && e.code;
+      if(code === 'invalid_argument' || code === 'not_granted' || code === 'revoked'){
+        LIVE.canWrite = false; store.liveId = null;
+        try{ window.localStorage.setItem(KEY, JSON.stringify(store)); }catch(_){}
+        toast('Only the scorekeeper can update the live board');
+      } else if(Date.now() - LIVE.failToast > 20000){
+        LIVE.failToast = Date.now();
+        toast(code === 'rate' ? 'Live board is busy. Scores will catch up on the next deal.' :
+              'Couldn\'t reach the live board. Scores will catch up on the next deal.');
+      }
+    }).then(function(){
+      LIVE.sending = false;
+      if(LIVE.again){ LIVE.again = false; livePush(); }
+      refreshLive();
+    });
+  }
+
+  /* --- receiving (everyone) --- */
+  function remoteFx(prev, ng){
+    var b = summarize(prev), a = summarize(ng), fx = {gameId:ng.id, before:b.totals};
+    if(a.deals > b.deals){
+      var last = null; ng.events.forEach(function(ev){ if(ev.kind === 'deal') last = ev; });
+      if(last){
+        fx.deltas = last.scores; fx.newDealId = last.id;
+        for(var k in last.scores) if(last.scores[k] === 0) fx.winner = k;
+      }
+      fx.newlyOut = b.active.filter(function(p){ return isOut(ng, a, p.id); }).map(function(p){ return p.id; });
+    }
+    if(a.finished && !b.finished) fx.won = true;
+    return fx;
+  }
+  var applyT = 0;
+  function applyRemote(id, game, updatedAt){
+    var prevE = LIVE.games[id], prev = prevE && prevE.game;
+    if(prevE && prevE.updatedAt > updatedAt) return;          // ignore older replays
+    if(game) LIVE.games[id] = {game:game, updatedAt:updatedAt, mine: store.liveId === id};
+    else delete LIVE.games[id];
+    if(watching === id){
+      if(!game){ watching = null; toast('The scorekeeper stopped sharing'); show(); return; }
+      if(prev && JSON.stringify(prev) !== JSON.stringify(game)) pendingFx = remoteFx(prev, game);
+    }
+    clearTimeout(applyT);
+    applyT = setTimeout(function(){ if(watching) renderGame(); else refreshLive(); }, 120);
+  }
+
+  function subscribeDb(){
+    var seen = null;
+    LIVE.db.doc('live/board').onSnapshot(function(snap){
+      var d = snap.exists ? snap.data() : null;
+      var g = d && d.game ? clone(d.game) : null;
+      if(g && LIVE.lastSent === null && store.liveId === g.id) LIVE.lastSent = JSON.stringify(d.game);
+      if(seen && (!g || seen !== g.id)) applyRemote(seen, null, Date.now());
+      if(g){ seen = g.id; applyRemote(g.id, g, d.updatedAt || Date.now()); } else seen = null;
+    }, function(e){ if(e && e.code === 'unavailable') setTimeout(subscribeDb, 4000); });
+  }
+
+  function subscribeWeb(){
+    if(typeof EventSource === 'undefined') return;
+    try{ if(LIVE.es) LIVE.es.close(); }catch(_){}
+    var es = new EventSource(NTFY + TOPIC + '/sse?since=12h');
+    LIVE.es = es;
+    es.onmessage = function(ev){
+      var m; try{ m = JSON.parse(ev.data); }catch(_){ return; }
+      if(!m || m.event !== 'message') return;
+      var get = m.attachment && m.attachment.url ? fetch(m.attachment.url).then(function(r){ return r.text(); }) : Promise.resolve(m.message);
+      get.then(decodeMsg).then(function(p){
+        if(!p || p.v !== 1) return;
+        if(p.g && p.g.id && Array.isArray(p.g.players) && Array.isArray(p.g.events)) applyRemote(p.g.id, p.g, p.t || m.time * 1000);
+        else if(p.stop) applyRemote(String(p.stop), null, p.t || m.time * 1000);
+      }).catch(function(){});
+    };
+  }
+
+  // Only touches live UI — never rebuilds inputs the scorekeeper may be typing in.
+  function refreshLive(){
+    if(watching) return;
+    var g = curGame();
+    if(g) renderLiveUI(g); else renderLivePanel();
+  }
+
+  // Games other devices are scoring right now (plus ones that finished in the last 2 hours).
+  function runningGames(){
+    var now = Date.now(), list = [];
+    for(var id in LIVE.games){
+      var e = LIVE.games[id]; if(!e || !e.game) continue;
+      if(store.liveId === id) continue;                  // this device's own game is already on screen
+      var s = summarize(e.game);
+      var age = now - e.updatedAt;
+      if(s.finished ? age > 2 * 3600e3 : age > 8 * 3600e3) continue;
+      list.push({e:e, s:s});
+    }
+    list.sort(function(a, b){ return (a.s.finished - b.s.finished) || (b.e.updatedAt - a.e.updatedAt); });
+    return list.slice(0, 6);
+  }
+
+  function renderLivePanel(){
+    var panel = el('livePanel'), list = runningGames();
+    if(!list.length){ panel.hidden = true; return; }
+    panel.hidden = false;
+    var anyRunning = list.some(function(x){ return !x.s.finished; });
+    el('liveTitle').textContent = anyRunning ? 'Live now' : 'Just finished';
+    el('liveAge').textContent = list.length > 1 ? list.length + ' games' : '';
+    var slot = el('liveSlot'); slot.innerHTML = '';
+    list.forEach(function(x){
+      var r = x.e.game, s = x.s;
+      var rows = r.players.map(function(p, i){ return {p:p, i:i, t:s.totals[p.id], out:isOut(r, s, p.id) && !(s.finished && s.winnerId === p.id)}; });
+      rows.sort(function(a, b){ return (a.out - b.out) || (a.t - b.t); });
+      var card = document.createElement('div'); card.className = 'livecard';
+      card.innerHTML = '<div class="lhead"><span class="lttl">' + esc(r.label) + '</span>' +
+        '<small style="color:var(--text-2)">' + (s.finished ? (s.winnerId ? esc(nameOf(r, s.winnerId)) + ' won' : 'Finished') : 'Deal ' + (s.deals + 1) + ' next') + '</small></div>' +
+        rows.map(function(y){
+          return '<div class="lrow' + (y.out ? ' out' : '') + '"><span class="pdot" style="--pc:var(--p' + (y.i + 1) + ')"></span><span class="nm">' + esc(y.p.name) + '</span><span class="sc">' + y.t + '</span></div>';
+        }).join('') +
+        '<div class="lfoot" data-ago="' + x.e.updatedAt + '">Updated ' + ago(x.e.updatedAt) + '</div>' +
+        '<div class="btnrow"><button type="button" class="btn">' + (s.finished ? 'View scores' : 'Watch live') + '</button>' +
+        (LIVE.canWrite !== false && !s.finished ? '<button type="button" class="btn ghost">Score here</button>' : '') + '</div>';
+      var bs = card.querySelectorAll('.btnrow .btn');
+      bs[0].addEventListener('click', function(){ watching = r.id; show(); window.scrollTo(0,0); });
+      if(bs[1]) bs[1].addEventListener('click', function(){ takeOver(r.id); });
+      slot.appendChild(card);
+    });
+  }
+
+  // Continue scoring a live game on this device (e.g. moving from phone to laptop).
+  function takeOver(id){
+    var e = remoteEntry(id); if(!e) return;
+    var rg = clone(e.game);
+    store.games = store.games.filter(function(x){ return x.id !== rg.id; });
+    store.games.unshift(rg);
+    store.currentId = rg.id; store.liveId = rg.id; store.draft = {};
+    LIVE.lastSent = JSON.stringify(rg);
+    watching = null; save(); show(); window.scrollTo(0,0);
+    toast('Scoring on this device');
+  }
+
+  function renderLiveUI(g){
+    var btn = el('liveBtn'), bar = el('liveBar');
+    btn.hidden = !!watching || LIVE.canWrite === false;
+    btn.classList.toggle('na', !LIVE.mode);
+    var isLive = !!LIVE.mode && store.liveId === g.id;
+    btn.classList.toggle('on', isLive);
+    el('liveBtnTxt').textContent = isLive ? 'Live' : 'Go live';
+    btn.setAttribute('aria-pressed', isLive ? 'true' : 'false');
+    var e = watching ? remoteEntry(watching) : null;
+    if(e){
+      bar.hidden = false;
+      bar.innerHTML = '<span><span class="livetag"><span class="ld"></span>Live</span> &nbsp;Updates by itself after every deal · <span data-ago="' + e.updatedAt + '">updated ' + ago(e.updatedAt) + '</span></span>' +
+        (LIVE.canWrite !== false && !summarize(e.game).finished ? '<button type="button" class="btn ghost" id="takeBtn2">Score here</button>' : '');
+      var t2 = el('takeBtn2'); if(t2) t2.addEventListener('click', function(){ takeOver(watching); });
+    } else if(isLive){
+      bar.hidden = false;
+      bar.innerHTML = '<span>Live: anyone who opens this scorebook sees these scores update after every deal.</span>';
+    } else if(!bar.dataset.info) bar.hidden = true;
+  }
+
+  el('liveBtn').addEventListener('click', function(){
+    var g = curGame(); if(!g) return;
+    var bar = el('liveBar');
+    if(!LIVE.mode){
+      bar.dataset.info = bar.hidden ? '1' : '';
+      bar.hidden = !bar.hidden;
+      bar.innerHTML = '<span>The live scoreboard needs an internet connection. Check your connection and reload the page.</span>';
+      return;
+    }
+    bar.dataset.info = '';
+    if(store.liveId === g.id){
+      var id = g.id;
+      store.liveId = null; store.setup.autoLive = false; save(); livePush(id); renderLiveUI(g); toast('Stopped sharing live');
+    } else {
+      store.liveId = g.id; store.setup.autoLive = true; save(); livePush(); renderLiveUI(g);
+      toast('Live! Anyone who opens the scorebook can watch');
+    }
+  });
+
+  setInterval(function(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ago]'), function(n){
+      var t = +n.getAttribute('data-ago'); if(!t) return;
+      n.textContent = (n.classList.contains('lfoot') ? 'Updated ' : 'updated ') + ago(t);
+    });
+  }, 10000);
+
+  function startWeb(){
+    if(LIVE.mode) return;
+    if(!/^https?:$/.test(location.protocol) || typeof fetch === 'undefined') return;
+    LIVE.mode = 'web'; LIVE.canWrite = true;
+    subscribeWeb();
+    refreshLive();
+    if(store.liveId) livePushMaybe();
+  }
+  function liveInit(){
+    var inClaude = window.claude && typeof window.claude.use === 'function';
+    if(!inClaude){ startWeb(); return; }
+    window.claude.use('db').then(function(db){
+      if(!db){ startWeb(); return; }
+      LIVE.mode = 'db'; LIVE.db = db;
+      window.claude.use('user').then(function(u){ return u && u.can ? u.can('data.write') : null; })
+        .then(function(c){ LIVE.canWrite = c === true ? true : c === false ? false : null; refreshLive(); }, function(){});
+      subscribeDb();
+      refreshLive();
+      if(store.liveId) livePushMaybe();
+    }, function(){ startWeb(); });
+  }
+
   /* ---------- boot ---------- */
   dealHeaderHand();
   load();
   show();
+  liveInit();
 })();
 </script>
+
+</body></html>
