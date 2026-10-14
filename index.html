@@ -459,6 +459,12 @@
   .meld{color:var(--text-2);} .meld b{color:var(--gold);}
   .gamebar h1{font-family:var(--font-title); font-weight:800; font-size:1.6rem; letter-spacing:0; color:#FFF6DC;}
   .gamebar .back{background:rgba(0,0,0,.18); border-color:var(--hairline); color:var(--text);}
+  /* when the screen is narrow (or Safari's page zoom is high) let the title take its own row */
+  .gamebar{flex-wrap:wrap; row-gap:.6rem;}
+  .gamebar .ttl{flex:1 1 100%; order:3;}
+  .gamebar .livepill{margin-left:auto;}
+  @media (min-width:980px){ .gamebar .ttl{flex:1 1 auto; order:0;} }
+  .gamebar .sub{overflow-wrap:anywhere;}
 
   /* panels are ivory playing cards */
   section.panel{
@@ -1876,6 +1882,29 @@
       if(store.liveId) livePushMaybe();
     }, function(){ startWeb(); });
   }
+
+  /* ---------- always fit the phone's real width ----------
+     Safari remembers a page-zoom level per website. At 200–300% the page gets squeezed into a very
+     narrow column. On touch screens we measure that and scale the layout back so it fits the device,
+     whatever the zoom setting. Pinch-zoom is unaffected (it doesn't change the layout width). */
+  function fitToDevice(){
+    try{
+      var coarse = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+      var w = document.documentElement.clientWidth;
+      var sMin = Math.min(screen.width, screen.height), sMax = Math.max(screen.width, screen.height);
+      var land = (screen.orientation && screen.orientation.type) ? screen.orientation.type.indexOf('landscape') === 0 :
+                 (typeof window.orientation === 'number' ? Math.abs(window.orientation) === 90 : window.innerWidth > window.innerHeight);
+      var dev = land ? sMax : sMin;
+      var z = 1;
+      if(coarse && w > 0 && dev > 0 && dev / w > 1.15) z = Math.max(0.25, w / dev);
+      var val = z === 1 ? '' : String(Math.round(z * 1000) / 1000);
+      Array.prototype.forEach.call(document.querySelectorAll('.wrap, .toast'), function(n){ if(n.style.zoom !== val) n.style.zoom = val; });
+      document.documentElement.classList.toggle('fitted', z !== 1);
+    }catch(e){}
+  }
+  fitToDevice();
+  window.addEventListener('resize', fitToDevice);
+  window.addEventListener('orientationchange', function(){ setTimeout(fitToDevice, 250); });
 
   /* ---------- boot ---------- */
   dealHeaderHand();
