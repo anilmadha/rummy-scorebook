@@ -5,11 +5,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Rummy">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#EEF0F3" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#12151A" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#0b4a30" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b4a30" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
 <style>
   /* Layout: single 480px phone column, hairline-separated panels — same system as Lean Metrics */
   :root{
@@ -420,6 +420,142 @@
   #fx{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:60; transition:opacity .45s;}
   #fx.catch{pointer-events:auto; cursor:pointer;}
   #fx.fade{opacity:0;}
+
+
+  /* ================= CARD TABLE THEME =================
+     Felt-green table, ivory playing-card panels, gold buttons, poker-chip score buttons.
+     Same look in light and dark mode — like a real table. */
+  :root:root:root{
+    --bg:#0b4a30; --surface:rgba(255,248,230,0.09); --text:#F6EED8; --text-2:rgba(246,238,216,0.72);
+    --hairline:rgba(246,238,216,0.24); --tint:rgba(0,0,0,0.2);
+    --accent:#E3BE5A; --win:#86DDAA; --out:#FF9480; --warn:#F2C35B; --danger:#FF9480;
+    --gold:#E3BE5A; --gold-hi:#F4D886; --gold-lo:#C79A33; --felt:#0e5a3a; --felt-dk:#083522;
+    --font-title:'Playfair Display',Georgia,'Times New Roman',serif;
+    color-scheme:dark;
+  }
+  section.panel, .livecard{
+    --bg:#FBF7EC; --surface:#FFFFFF; --text:#1D1A14; --text-2:#6B6352;
+    --hairline:rgba(70,52,20,0.16); --tint:rgba(70,52,20,0.06);
+    --accent:#0f5a3a; --win:#1F7A4C; --out:#B7412E; --warn:#9A6F14; --danger:#B7412E;
+    --p1:#2a78d6; --p2:#eb6834; --p3:#1baf7a; --p4:#d99400; --p5:#e0679a; --p6:#008300; --p7:#4a3aa7; --p8:#e34948;
+    color-scheme:light; color:var(--text);
+  }
+  html{background:#083522;}
+  body{
+    background-color:#0b4a30;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      radial-gradient(120% 70% at 50% 0%, #1b8054 0%, #0f5d3c 38%, #0a4129 72%, #072f1e 100%);
+    background-attachment:scroll;
+    min-height:100vh; color:var(--text);
+  }
+
+  /* headings on the felt */
+  header.top h1{font-family:var(--font-title); font-weight:800; font-size:2.15rem; letter-spacing:0; color:#FFF6DC;
+    text-shadow:0 2px 0 rgba(0,0,0,.25), 0 0 24px rgba(227,190,90,.18);}
+  header.top h1::after{content:""; display:block; width:3.2rem; height:3px; border-radius:3px; margin-top:.55rem;
+    background:linear-gradient(90deg,var(--gold-hi),var(--gold-lo));}
+  header.top p{color:var(--text-2);}
+  .meld{color:var(--text-2);} .meld b{color:var(--gold);}
+  .gamebar h1{font-family:var(--font-title); font-weight:800; font-size:1.6rem; letter-spacing:0; color:#FFF6DC;}
+  .gamebar .back{background:rgba(0,0,0,.18); border-color:var(--hairline); color:var(--text);}
+
+  /* panels are ivory playing cards */
+  section.panel{
+    border-top:none; border-radius:18px; padding:1.15rem 1.05rem 1.2rem; margin:0 0 1rem; position:relative;
+    background:linear-gradient(180deg,#FFFDF7 0%,#F8F1DF 100%);
+    box-shadow:0 1px 0 rgba(255,255,255,.7) inset, 0 0 0 1px rgba(70,52,20,.1), 0 2px 3px rgba(0,0,0,.22), 0 14px 28px -16px rgba(0,0,0,.65);
+  }
+  section.panel::after{ /* a faint card pip in the corner */
+    content:"\2660\FE0E"; position:absolute; right:.8rem; bottom:.45rem; font-size:.85rem; line-height:1; color:rgba(29,26,20,.1); pointer-events:none;
+  }
+  section.panel:has(details)::after{content:none;}
+  section.panel:nth-of-type(2n)::after{content:"\2665\FE0E"; color:rgba(183,65,46,.13);}
+  section.panel:nth-of-type(3n)::after{content:"\2666\FE0E"; color:rgba(183,65,46,.13);}
+  section.panel:nth-of-type(4n)::after{content:"\2663\FE0E"; color:rgba(29,26,20,.1);}
+  h2.panel-title{font-family:var(--font-title); font-weight:700; font-size:1.12rem; letter-spacing:.01em;}
+  h2.panel-title small{font-family:var(--font-body);}
+
+  /* gold buttons */
+  .btn{
+    background:linear-gradient(180deg,var(--gold-hi) 0%,var(--gold) 45%,var(--gold-lo) 100%); color:#2B1E04; border:none;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.65), 0 2px 0 #8E6C1E, 0 8px 16px -8px rgba(0,0,0,.55);
+    text-shadow:0 1px 0 rgba(255,255,255,.35); letter-spacing:.01em;
+  }
+  .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--hairline); box-shadow:none; text-shadow:none;}
+  .btn.danger{background:transparent; color:var(--danger); border:1px solid var(--hairline); box-shadow:none; text-shadow:none;}
+  .btn.confirming{background:var(--danger); color:#fff; border-color:var(--danger); text-shadow:none;}
+  .linkbtn{color:var(--accent);}
+
+  .segmented{background:#F1EAD6; border-color:var(--hairline);}
+  input[type=number], input[type=text]{background:#FFFFFF; border-color:rgba(70,52,20,.2); box-shadow:inset 0 1px 2px rgba(70,52,20,.08);}
+
+  /* scoreboard */
+  .prow .tot{font-family:var(--font-title); font-weight:800; font-size:1.75rem;}
+  .prow .pdot{width:12px; height:12px; border-radius:50%; box-shadow:0 0 0 2px #fff, 0 0 0 3px rgba(70,52,20,.18);}
+  .bar{height:6px; border-radius:3px;}
+  .bar i{background:linear-gradient(90deg,#3a9a6a,#1F7A4C);}
+  .bar i.warn{background:linear-gradient(90deg,#E8B94A,#C48F1A);}
+  .bar i.hot{background:linear-gradient(90deg,#E06A52,#B7412E);}
+  .bar i.won{background:linear-gradient(90deg,var(--gold-hi),var(--gold-lo));}
+  .chip.lead{background:rgba(31,122,76,.1);}
+  .chip.out{background:rgba(183,65,46,.08);}
+
+  /* game-over banner: a small piece of felt inside the card */
+  .banner{
+    background:radial-gradient(120% 120% at 50% 0%, #1b8054 0%, #0e5a3a 55%, #083522 100%);
+    color:#F6EED8; border:2px solid rgba(227,190,90,.55); box-shadow:inset 0 0 30px rgba(0,0,0,.35);
+  }
+  .banner .lbl{color:var(--gold);}
+  .banner .big{font-family:var(--font-title); font-size:1.7rem; color:#FFF6DC;}
+  .banner .hint{color:rgba(246,238,216,.75);}
+  .banner .btn.ghost{color:#F6EED8; border-color:rgba(246,238,216,.45);}
+
+  /* poker-chip quick buttons: R green, then blue, red, black */
+  .quick{
+    --chip:#1F7A4C; width:2.65rem; height:2.65rem; border-radius:50%; border:none; padding:0;
+    color:#fff; font-family:var(--font-display); font-weight:700; font-size:.8rem; text-shadow:0 1px 1px rgba(0,0,0,.5);
+    background:
+      radial-gradient(circle, var(--chip) 0 50%, rgba(255,255,255,.95) 51% 55%, var(--chip) 56% 66%, transparent 67%),
+      repeating-conic-gradient(var(--chip) 0deg 30deg, #F6EED8 30deg 45deg);
+    box-shadow:0 2px 0 rgba(0,0,0,.28), 0 4px 8px -3px rgba(0,0,0,.4);
+    transition:transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s;
+  }
+  .erow .quick:nth-of-type(1){--chip:#1F7A4C;}
+  .erow .quick:nth-of-type(2){--chip:#2A5DB0;}
+  .erow .quick:nth-of-type(3){--chip:#B8342A;}
+  .erow .quick:nth-of-type(4){--chip:#2A2620;}
+  .quick.r{color:#fff; font-family:var(--font-title); font-size:.95rem;}
+  .quick.on{transform:translateY(-3px) scale(1.08); color:#fff;
+    box-shadow:0 0 0 3px var(--gold), 0 6px 0 -2px rgba(0,0,0,.25), 0 10px 16px -6px rgba(0,0,0,.5);}
+  .quick:active{transform:scale(.92);}
+  @container (max-width: 430px){
+    .erow .quick{width:min(100%, 3.1rem); height:auto; aspect-ratio:1; justify-self:center;}
+  }
+  .erow input.isR{color:var(--win);}
+  .dealer button.on{background:var(--accent); color:#FBF7EC;}
+
+  table.hist tfoot td{font-family:var(--font-title); font-size:.95rem;}
+  table.hist td.r{color:var(--win);}
+
+  /* saved / live game tiles on the felt */
+  .gitem{background:rgba(0,0,0,.14); border-color:var(--hairline); color:var(--text);}
+  section.panel .gitem{background:#FFFFFF; border-color:var(--hairline); color:var(--text);}
+  .livecard{background:linear-gradient(180deg,#FFFFFF,#FBF6E9);}
+  .livetag{color:var(--out);}
+  section.panel .livetag{color:#B7412E;}
+
+  .livepill{background:rgba(0,0,0,.2); border-color:var(--hairline); color:var(--text);}
+  .livepill.on{color:#FFB3A3; border-color:rgba(255,148,128,.6);}
+  .livebar{background:rgba(0,0,0,.2); color:var(--text-2);}
+
+  .toast{background:linear-gradient(180deg,var(--gold-hi),var(--gold-lo)); color:#2B1E04; box-shadow:0 8px 20px -8px rgba(0,0,0,.6);}
+  footer p{color:var(--text-2);}
+  details.methods summary::after{color:var(--text-2);}
+
+  /* header card fan: a soft spotlight under the cards */
+  header.top .hand::before{content:""; position:absolute; left:50%; bottom:6px; width:220px; height:40px; transform:translateX(-50%);
+    background:radial-gradient(closest-side, rgba(0,0,0,.35), transparent); filter:blur(2px);}
 
   @media (prefers-reduced-motion: reduce){
     *, *::before, *::after{animation:none !important; transition:none !important;}
